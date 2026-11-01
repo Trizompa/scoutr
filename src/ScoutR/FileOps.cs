@@ -120,4 +120,17 @@ public static class FileOps
         Directory.CreateDirectory(target);
         return target;
     }
+
+    /// <summary>Creates an empty file. Name clashes get " (2)", " (3)"... before the extension, like Explorer.</summary>
+    public static string CreateFile(string parent, string name)
+    {
+        if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            throw new IOException("The name contains invalid characters.");
+        string stem = Path.GetFileNameWithoutExtension(name), ext = Path.GetExtension(name);
+        string target = Path.Combine(parent, name);
+        for (int i = 2; File.Exists(target) || Directory.Exists(target); i++)
+            target = Path.Combine(parent, $"{stem} ({i}){ext}");
+        using (File.Create(target)) { }
+        return target;
+    }
 }

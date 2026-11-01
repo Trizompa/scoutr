@@ -283,6 +283,7 @@ public partial class MainWindow : Window
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Btn_Paste", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
             menu.Items.Add(MenuEntry("Btn_NewFolder", "F7", inFolder, NewFolder));
+            menu.Items.Add(MenuEntry("Ctx_NewTextFile", null, inFolder, NewTextFile));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Ctx_Properties", null, inFolder,
                 () => ShellVerb(_active.CurrentPath, "properties")));
@@ -434,22 +435,30 @@ public partial class MainWindow : Window
         }
     }
 
-    private void NewFolder()
+    private void NewFolder() => CreateNew(folder: true);
+
+    private void NewTextFile() => CreateNew(folder: false);
+
+    /// <summary>New folder or new text file in the active pane; the name is asked first.</summary>
+    private void CreateNew(bool folder)
     {
-        // Fix the target before the dialog opens: focus changes while it is open must not move the folder.
+        // Fix the target before the dialog opens: focus changes while it is open must not move it.
         var pane = _active;
         var view = ActiveView;
-        string folder = pane.CurrentPath;
-        if (folder.Length == 0) return;
+        string dir = pane.CurrentPath;
+        if (dir.Length == 0) return;
 
-        string? name = InputDialog.Ask(this, Loc.Get("Prompt_NewFolderTitle"), Loc.Get("Prompt_NewFolderLabel", folder),
-            Loc.Get("NewFolderDefault"), selectStemOnly: false);
+        string? name = folder
+            ? InputDialog.Ask(this, Loc.Get("Prompt_NewFolderTitle"), Loc.Get("Prompt_NewFolderLabel", dir),
+                Loc.Get("NewFolderDefault"), selectStemOnly: false)
+            : InputDialog.Ask(this, Loc.Get("Prompt_NewFileTitle"), Loc.Get("Prompt_NewFileLabel", dir),
+                Loc.Get("NewFileDefault"), selectStemOnly: true);
         RestoreActive(pane, view);
         if (name is null) return;
 
         try
         {
-            string target = FileOps.CreateFolder(folder, name);
+            string target = folder ? FileOps.CreateFolder(dir, name) : FileOps.CreateFile(dir, name);
             _a.Reload();
             _b.Reload();
             view.SelectPaths(new[] { target });

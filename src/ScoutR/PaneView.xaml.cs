@@ -77,10 +77,32 @@ public partial class PaneView : UserControl
     /// <summary>Right-click on empty space clears the selection, so the menu acts on the folder itself.</summary>
     private void ItemList_RightDown(object sender, MouseButtonEventArgs e)
     {
+        if (IsOnEmptySpace(e)) ItemList.SelectedItems.Clear();
+    }
+
+    /// <summary>Left click on empty space clears the selection, like Explorer.</summary>
+    private void ItemList_LeftDown(object sender, MouseButtonEventArgs e)
+    {
+        if (Keyboard.Modifiers == ModifierKeys.None && IsOnEmptySpace(e))
+        {
+            ItemList.SelectedItems.Clear();
+            ItemList.Focus();
+        }
+    }
+
+    /// <summary>True when the click is not on a row, a column header or a scrollbar.</summary>
+    private bool IsOnEmptySpace(MouseButtonEventArgs e)
+    {
         var hit = e.OriginalSource as DependencyObject;
-        while (hit is not null && hit is not ListViewItem && hit != ItemList)
-            hit = System.Windows.Media.VisualTreeHelper.GetParent(hit);
-        if (hit is not ListViewItem) ItemList.SelectedItems.Clear();
+        while (hit is not null && hit != ItemList)
+        {
+            if (hit is ListViewItem or GridViewColumnHeader or System.Windows.Controls.Primitives.ScrollBar)
+                return false;
+            hit = hit is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D
+                ? System.Windows.Media.VisualTreeHelper.GetParent(hit)
+                : LogicalTreeHelper.GetParent(hit);
+        }
+        return true;
     }
 
     private void ItemList_SelectionChanged(object sender, SelectionChangedEventArgs e)
