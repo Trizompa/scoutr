@@ -63,6 +63,11 @@
   <data name="Msg_Error" xml:space="preserve"><value>Error: {0}</value></data>
   <data name="Msg_Ready" xml:space="preserve"><value>Ready</value></data>
 
-  <data name="Update_Available" xml:space="preserve"><value>Update {0} available. Click to restart and update.</value></data>
+  <data name="Update_Check" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="Update_Checking" xml:space="preserve"><value>Checking...</value></data>
+  <data name="Update_Install" xml:space="preserve"><value>Update to {0}</value></data>
+  <data name="Update_UpToDate" xml:space="preserve"><value>ScoutR is up to date (v{0}).</value></data>
+  <data name="Update_NotInstalled" xml:space="preserve"><value>Updates only work in the packaged version of ScoutR (the Portable download).</value></data>
+  <data name="Update_Failed" xml:space="preserve"><value>Could not check for updates: {0}</value></data>
   <data name="Update_Downloading" xml:space="preserve"><value>Downloading update...</value></data>
 </root>

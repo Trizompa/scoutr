@@ -59,17 +59,63 @@ public partial class MainWindow : Window
         VersionText.Text = "v" + AppInfo.Version;
         ViewA.FocusList();
 
-        string? version = await _updater.CheckAsync();
-        if (version is not null)
+        await CheckForUpdatesAsync(manual: false);
+    }
+
+    // ---- Updates ----
+
+    private string? _availableVersion;
+    private bool _checkingUpdates;
+
+    private void ShowUpdateButton()
+    {
+        UpdateBtn.IsEnabled = true;
+        UpdateBtn.Tag = _availableVersion is null ? null : "available";
+        UpdateBtnLabel.Text = _availableVersion is null
+            ? Loc.Get("Update_Check")
+            : Loc.Get("Update_Install", _availableVersion);
+    }
+
+    /// <summary>Looks for a newer release. Silent at startup, reports the result when the user clicked.</summary>
+    private async Task CheckForUpdatesAsync(bool manual)
+    {
+        if (_checkingUpdates) return;
+        _checkingUpdates = true;
+        UpdateBtn.IsEnabled = false;
+        UpdateBtnLabel.Text = Loc.Get("Update_Checking");
+
+        try
         {
-            UpdateButton.Content = Loc.Get("Update_Available", version);
-            UpdateButton.Visibility = Visibility.Visible;
+            if (!_updater.IsInstalled)
+            {
+                if (manual) Status(Loc.Get("Update_NotInstalled"));
+                return;
+            }
+
+            _availableVersion = await _updater.CheckAsync();
+
+            if (_availableVersion is not null) Status(Loc.Get("Update_Install", _availableVersion));
+            else if (manual)
+                Status(_updater.Error is null
+                    ? Loc.Get("Update_UpToDate", AppInfo.Version)
+                    : Loc.Get("Update_Failed", _updater.Error));
+        }
+        finally
+        {
+            _checkingUpdates = false;
+            ShowUpdateButton();
         }
     }
 
-    private async void Update_Click(object sender, RoutedEventArgs e)
+    private async void UpdateBtn_Click(object sender, RoutedEventArgs e)
     {
-        UpdateButton.IsEnabled = false;
+        if (_availableVersion is null)
+        {
+            await CheckForUpdatesAsync(manual: true);
+            return;
+        }
+
+        UpdateBtn.IsEnabled = false;
         Status(Loc.Get("Update_Downloading"));
         try
         {
@@ -78,7 +124,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Status(Loc.Get("Msg_Error", ex.Message));
-            UpdateButton.IsEnabled = true;
+            UpdateBtn.IsEnabled = true;
         }
     }
 

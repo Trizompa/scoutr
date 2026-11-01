@@ -17,12 +17,22 @@
         <!-- Ribbon: tab strip + grouped commands (Windows 10 Explorer style) -->
         <StackPanel Grid.Row="0">
             <Border Background="White" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+                <DockPanel>
+                <Button x:Name="UpdateBtn" DockPanel.Dock="Right" Style="{StaticResource TopBtn}"
+                        Margin="0,2,6,2" Click="UpdateBtn_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets" FontSize="13" Margin="0,0,6,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="UpdateBtnLabel" Text="{l:T Update_Check}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
                 <StackPanel Orientation="Horizontal" Margin="6,2,0,0">
                     <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
                             BorderThickness="1,1,1,0" Padding="16,4,16,5" Margin="0,0,0,-1">
                         <TextBlock Text="{l:T Tab_Home}" Foreground="{StaticResource AccentBrush}"/>
                     </Border>
                 </StackPanel>
+                </DockPanel>
             </Border>
             <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
                     BorderThickness="0,0,0,1" Padding="4,4,4,0">
@@ -135,8 +145,6 @@
         <!-- Status bar + update notice -->
         <Border Grid.Row="2" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,3">
             <DockPanel>
-                <Button x:Name="UpdateButton" DockPanel.Dock="Right" Visibility="Collapsed" Focusable="False"
-                        Padding="10,1" Click="Update_Click"/>
                 <TextBlock x:Name="VersionText" DockPanel.Dock="Right" Margin="12,0,0,0"
                            Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>

@@ -11,20 +11,34 @@ public sealed class Updater
     private readonly UpdateManager _manager = new(new GithubSource(RepoUrl, null, false));
     private UpdateInfo? _pending;
 
-    /// <summary>Returns the new version string, or null if up to date / not installed / offline.</summary>
+    /// <summary>False when started from the IDE or an unpacked build: updates only work for the packaged app.</summary>
+    public bool IsInstalled
+    {
+        get
+        {
+            try { return _manager.IsInstalled; }
+            catch { return false; }
+        }
+    }
+
+    /// <summary>Message of the last failed check, or null if the last check worked.</summary>
+    public string? Error { get; private set; }
+
+    /// <summary>Returns the new version string, or null if up to date, not installed or offline.</summary>
     public async Task<string?> CheckAsync()
     {
+        Error = null;
         try
         {
-            // Not running from a Velopack package (e.g. started from the IDE): nothing to do.
-            if (!_manager.IsInstalled) return null;
+            if (!IsInstalled) return null;
 
             _pending = await _manager.CheckForUpdatesAsync();
             return _pending?.TargetFullRelease.Version.ToString();
         }
-        catch
+        catch (Exception ex)
         {
-            return null; // Updates must never break the app.
+            Error = ex.Message; // Updates must never break the app.
+            return null;
         }
     }
 
