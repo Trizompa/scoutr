@@ -43,19 +43,22 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent"
-                                BorderThickness="1" MinWidth="62" Padding="6,4">
+                        <!-- Windows 11 look: thin Fluent icons (MDL2 on Windows 10), grey rounded hover. -->
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" MinWidth="62" Padding="6,5"
+                                Margin="1,0">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="26"
-                                           Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"/>
-                                <ContentPresenter HorizontalAlignment="Center" Margin="0,3,0,0"
-                                                  TextElement.FontSize="11"/>
+                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           FontSize="20" Foreground="#2B2B2B" HorizontalAlignment="Center"/>
+                                <ContentPresenter HorizontalAlignment="Center" Margin="0,5,0,0"
+                                                  TextElement.FontSize="11" TextElement.Foreground="#1A1A1A"/>
                             </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SelBorderBrush}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="#EAEAEA"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#DDDDDD"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4"/>
