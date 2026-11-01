@@ -91,9 +91,7 @@ public partial class MainWindow : Window
 
     private void SyncTree()
     {
-        _tree.Reveal(Other.CurrentPath);
-        _tree.SelectPath(_active.CurrentPath);
-        _tree.MarkOther(Other.CurrentPath);
+        _tree.ShowFor(_active == _a ? "A" : "B", _active.CurrentPath);
         Title = $"{_active.FolderName} - ScoutR";
     }
 

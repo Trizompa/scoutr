@@ -94,12 +94,6 @@
             <DockPanel Grid.Column="0">
                 <Grid DockPanel.Dock="Top" Margin="10,6,10,4">
                     <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}"/>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" Margin="0,0,4,0"/>
-                        <TextBlock Text="{l:T Tree_Active}" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,10,0"/>
-                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" Opacity="0.5" Margin="0,0,4,0"/>
-                        <TextBlock Text="{l:T Tree_Other}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
-                    </StackPanel>
                 </Grid>
                 <TreeView x:Name="Tree" BorderThickness="0" Padding="0,2">
                     <TreeView.Resources>
@@ -113,9 +107,6 @@
                                 <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                            Foreground="{Binding GlyphBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                <TextBlock Text=" &#x25CF;" Foreground="{StaticResource AccentBrush}" Opacity="0.55"
-                                           VerticalAlignment="Center"
-                                           Visibility="{Binding IsOther, Converter={StaticResource B2V}}"/>
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.Resources>

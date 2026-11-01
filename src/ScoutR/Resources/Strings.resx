@@ -15,8 +15,6 @@
   <data name="Grp_Edit" xml:space="preserve"><value>Edit</value></data>
   <data name="Grp_New" xml:space="preserve"><value>New</value></data>
   <data name="Grp_View" xml:space="preserve"><value>View</value></data>
-  <data name="Tree_Active" xml:space="preserve"><value>active</value></data>
-  <data name="Tree_Other" xml:space="preserve"><value>other</value></data>
 
   <data name="Btn_Cut" xml:space="preserve"><value>Cut</value></data>
   <data name="Btn_Copy" xml:space="preserve"><value>Copy</value></data>

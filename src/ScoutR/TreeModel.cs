@@ -5,8 +5,8 @@ using System.Windows.Media;
 namespace ScoutR;
 
 /// <summary>
-/// The single folder tree. It always mirrors the active pane: SelectPath() expands and selects
-/// that folder, MarkOther() shows a dot on the folder of the inactive pane.
+/// The single folder tree. It shows only the active pane: each pane keeps its own set of
+/// expanded folders, and ShowFor() swaps to the set of the pane that just became active.
 /// </summary>
 public sealed class TreeModel
 {
@@ -31,38 +31,87 @@ public sealed class TreeModel
         if (!Suppress) UserNavigated?.Invoke(path);
     }
 
-    /// <summary>Expands the tree down to <paramref name="path"/> and selects it.</summary>
-    public void SelectPath(string path) => Walk(path, select: true);
+    private readonly Dictionary<string, HashSet<string>> _saved = new();
+    private string? _context;
 
-    /// <summary>Expands the tree down to <paramref name="path"/> without selecting it.</summary>
-    public void Reveal(string path) => Walk(path, select: false);
-
-    public void MarkOther(string path) => Root.MarkOther(path);
-
-    private void Walk(string path, bool select)
+    /// <summary>
+    /// Shows the tree for one pane (<paramref name="context"/> is a pane id) and selects <paramref name="path"/>.
+    /// When the pane differs from the last call, the previous pane's open folders are saved and
+    /// replaced with this pane's own, so the two panes never mix.
+    /// </summary>
+    public void ShowFor(string context, string path)
     {
         Suppress = true;
         try
         {
-            var node = Root;
-            node.IsExpanded = true;
-
-            foreach (string segment in Chain(path))
+            if (_context != context)
             {
-                node.EnsureLoaded();
-                var child = node.Children.FirstOrDefault(c =>
-                    !c.IsDummy && string.Equals(c.Path, segment, StringComparison.OrdinalIgnoreCase));
-                if (child is null) break;
-                node = child;
-                node.IsExpanded = true;
+                if (_context is not null)
+                {
+                    var open = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    CollectExpanded(Root, open);
+                    _saved[_context] = open;
+                }
+
+                CollapseAll(Root);
+                _context = context;
+
+                if (_saved.TryGetValue(context, out var mine))
+                    foreach (string folder in mine) WalkCore(folder, select: false);
             }
 
-            if (select) node.IsSelected = true;
+            ClearSelection(Root);
+            WalkCore(path, select: true);
         }
         finally
         {
             Suppress = false;
         }
+    }
+
+    private void WalkCore(string path, bool select)
+    {
+        var node = Root;
+        node.IsExpanded = true;
+
+        foreach (string segment in Chain(path))
+        {
+            node.EnsureLoaded();
+            var child = node.Children.FirstOrDefault(c =>
+                !c.IsDummy && string.Equals(c.Path, segment, StringComparison.OrdinalIgnoreCase));
+            if (child is null) break;
+            node = child;
+            node.IsExpanded = true;
+        }
+
+        if (select) node.IsSelected = true;
+    }
+
+    private static void CollectExpanded(TreeNodeVm node, HashSet<string> into)
+    {
+        foreach (var child in node.Children)
+        {
+            if (child.IsDummy) continue;
+            if (child.IsExpanded) into.Add(child.Path);
+            CollectExpanded(child, into);
+        }
+    }
+
+    private static void CollapseAll(TreeNodeVm node)
+    {
+        foreach (var child in node.Children)
+        {
+            if (child.IsDummy) continue;
+            child.IsExpanded = false;
+            CollapseAll(child);
+        }
+    }
+
+    private static void ClearSelection(TreeNodeVm node)
+    {
+        node.IsSelected = false;
+        foreach (var child in node.Children)
+            if (!child.IsDummy) ClearSelection(child);
     }
 
     /// <summary>C:\Users\Me -> C:\, C:\Users, C:\Users\Me</summary>
@@ -89,7 +138,6 @@ public sealed class TreeNodeVm : ObservableObject
     private bool _loaded;
     private bool _expanded;
     private bool _selected;
-    private bool _other;
 
     public TreeNodeVm(TreeModel model, string name, string path, bool isRoot = false, bool isDummy = false)
     {
@@ -130,13 +178,6 @@ public sealed class TreeNodeVm : ObservableObject
         }
     }
 
-    /// <summary>True when the other (inactive) pane is showing this folder.</summary>
-    public bool IsOther
-    {
-        get => _other;
-        private set => Set(ref _other, value);
-    }
-
     public void EnsureLoaded()
     {
         if (_loaded || IsDummy) return;
@@ -168,10 +209,4 @@ public sealed class TreeNodeVm : ObservableObject
         }
     }
 
-    public void MarkOther(string path)
-    {
-        IsOther = !IsDummy && string.Equals(Path, path, StringComparison.OrdinalIgnoreCase);
-        if (!_loaded) return;
-        foreach (var child in Children) child.MarkOther(path);
-    }
 }
