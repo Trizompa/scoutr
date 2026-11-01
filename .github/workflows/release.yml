@@ -1,10 +1,15 @@
 name: Release
 
-# Push a tag like v0.1.0 to publish a release. Installed copies of ScoutR
+# Push a tag like v0.1.0, or run this workflow by hand with a version, to publish a release. Installed copies of ScoutR
 # find it on GitHub Releases and offer to update.
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 0.1.0 (creates tag v0.1.0)'
+        required: true
 
 permissions:
   contents: write
@@ -22,7 +27,11 @@ jobs:
       - name: Read version from tag
         id: v
         shell: bash
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then v="${INPUT_VERSION#v}"; else v="${GITHUB_REF_NAME#v}"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
 
       - name: Publish
         run: >
@@ -44,4 +53,4 @@ jobs:
         run: >
           vpk upload github --repoUrl https://github.com/${{ github.repository }}
           --token ${{ secrets.GITHUB_TOKEN }} --publish
-          --releaseName "ScoutR ${{ steps.v.outputs.version }}" --tag ${{ github.ref_name }}
+          --releaseName "ScoutR ${{ steps.v.outputs.version }}" --tag v${{ steps.v.outputs.version }} --targetCommitish ${{ github.sha }}
