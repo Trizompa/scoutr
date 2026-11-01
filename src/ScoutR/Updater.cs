@@ -42,10 +42,12 @@ public sealed class Updater
         }
     }
 
-    public async Task ApplyAsync()
+    /// <summary>Downloads and installs the update, then restarts. A maximized window stays maximized.</summary>
+    public async Task ApplyAsync(bool maximized)
     {
         if (_pending is null) return;
         await _manager.DownloadUpdatesAsync(_pending);
-        _manager.ApplyUpdatesAndRestart(_pending.TargetFullRelease);
+        _manager.ApplyUpdatesAndRestart(_pending.TargetFullRelease,
+            maximized ? new[] { "--maximized" } : Array.Empty<string>());
     }
 }

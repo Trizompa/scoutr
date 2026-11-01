@@ -158,6 +158,15 @@ public sealed class TreeNodeVm : ObservableObject
 
     public bool IsFolderShape => !IsRoot && !IsDummy;
 
+    /// <summary>Windows' own folder / drive icon (open folder when expanded).</summary>
+    public System.Windows.Media.ImageSource? Icon =>
+        IsDrive ? ShellIcons.ForDrive(Path) : IsExpanded ? ShellIcons.FolderOpen : ShellIcons.Folder;
+
+    public bool ShowShellIcon => IsFolderShape && ShellIcons.Available;
+    public bool ShowDrawnIcon => IsFolderShape && !ShellIcons.Available;
+
+    private bool IsDrive => !IsRoot && Path.Length <= 3 && Path.EndsWith('\\');
+
     public string Glyph => IsRoot ? "\uE7F4" : Path.Length <= 3 && Path.EndsWith('\\') ? "\uEDA2" : "\uE8B7";
 
     public Brush GlyphBrush => IsRoot ? Palette.Root : Glyph == "\uEDA2" ? Palette.Drive : Palette.Folder;
@@ -167,7 +176,11 @@ public sealed class TreeNodeVm : ObservableObject
         get => _expanded;
         set
         {
-            if (Set(ref _expanded, value) && value) EnsureLoaded();
+            if (Set(ref _expanded, value))
+            {
+                OnPropertyChanged(nameof(Icon));
+                if (value) EnsureLoaded();
+            }
         }
     }
 

@@ -19,6 +19,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // After an update the app restarts with --maximized if it was maximized before.
+        if (Environment.GetCommandLineArgs().Contains("--maximized")) WindowState = WindowState.Maximized;
+
         string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         string downloads = Path.Combine(profile, "Downloads");
@@ -119,7 +122,7 @@ public partial class MainWindow : Window
         Status(Loc.Get("Update_Downloading"));
         try
         {
-            await _updater.ApplyAsync(); // restarts the app on success
+            await _updater.ApplyAsync(WindowState == WindowState.Maximized); // restarts the app on success
         }
         catch (Exception ex)
         {

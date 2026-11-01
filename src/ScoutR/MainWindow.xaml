@@ -115,8 +115,10 @@
                         <HierarchicalDataTemplate DataType="{x:Type l:TreeNodeVm}" ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal" Margin="0,1">
                                 <Grid Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                    <Image Source="{Binding Icon}" RenderOptions.BitmapScalingMode="HighQuality"
+                                           Visibility="{Binding ShowShellIcon, Converter={StaticResource B2V}}"/>
                                     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ItemIcon}"
-                                                    Visibility="{Binding IsFolderShape, Converter={StaticResource B2V}}"/>
+                                                    Visibility="{Binding ShowDrawnIcon, Converter={StaticResource B2V}}"/>
                                     <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
                                                Foreground="{Binding GlyphBrush}" HorizontalAlignment="Center"
                                                Visibility="{Binding IsRoot, Converter={StaticResource B2V}}"/>
