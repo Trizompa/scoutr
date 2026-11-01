@@ -45,7 +45,7 @@
   <data name="Confirm_Delete" xml:space="preserve"><value>Move {0} item(s) to the Recycle Bin?</value></data>
 
   <data name="Prompt_NewFolderTitle" xml:space="preserve"><value>New folder</value></data>
-  <data name="Prompt_NewFolderLabel" xml:space="preserve"><value>Folder name:</value></data>
+  <data name="Prompt_NewFolderLabel" xml:space="preserve"><value>Folder name (in {0}):</value></data>
   <data name="Prompt_RenameTitle" xml:space="preserve"><value>Rename</value></data>
   <data name="Prompt_RenameLabel" xml:space="preserve"><value>New name:</value></data>
   <data name="NewFolderDefault" xml:space="preserve"><value>New folder</value></data>

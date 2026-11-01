@@ -142,6 +142,13 @@ public partial class MainWindow : Window
         SyncTree();
     }
 
+    /// <summary>After a dialog: the pane the command started in stays the active one and gets the focus back.</summary>
+    private void RestoreActive(PaneViewModel pane, PaneView view)
+    {
+        SetActive(pane);
+        view.FocusList();
+    }
+
     private void SyncTree()
     {
         _tree.ShowFor(_active == _a ? "A" : "B", _active.CurrentPath);
@@ -325,12 +332,15 @@ public partial class MainWindow : Window
 
     private void Rename()
     {
-        var items = ActiveView.SelectedItems;
+        var pane = _active;
+        var view = ActiveView;
+        var items = view.SelectedItems;
         if (items.Count != 1 || items[0].IsDrive) return;
 
         var item = items[0];
         string? name = InputDialog.Ask(this, Loc.Get("Prompt_RenameTitle"), Loc.Get("Prompt_RenameLabel"),
             item.Name, selectStemOnly: !item.IsDirectory);
+        RestoreActive(pane, view);
         if (name is null || name == item.Name) return;
 
         try
@@ -338,7 +348,7 @@ public partial class MainWindow : Window
             string target = FileOps.Rename(item.FullPath, name);
             _a.Reload();
             _b.Reload();
-            ActiveView.SelectPaths(new[] { target });
+            view.SelectPaths(new[] { target });
             Status(Loc.Get("Msg_Renamed"));
         }
         catch (Exception ex)
@@ -349,18 +359,23 @@ public partial class MainWindow : Window
 
     private void NewFolder()
     {
-        if (_active.CurrentPath.Length == 0) return;
+        // Fix the target before the dialog opens: focus changes while it is open must not move the folder.
+        var pane = _active;
+        var view = ActiveView;
+        string folder = pane.CurrentPath;
+        if (folder.Length == 0) return;
 
-        string? name = InputDialog.Ask(this, Loc.Get("Prompt_NewFolderTitle"), Loc.Get("Prompt_NewFolderLabel"),
+        string? name = InputDialog.Ask(this, Loc.Get("Prompt_NewFolderTitle"), Loc.Get("Prompt_NewFolderLabel", folder),
             Loc.Get("NewFolderDefault"), selectStemOnly: false);
+        RestoreActive(pane, view);
         if (name is null) return;
 
         try
         {
-            string target = FileOps.CreateFolder(_active.CurrentPath, name);
+            string target = FileOps.CreateFolder(folder, name);
             _a.Reload();
             _b.Reload();
-            ActiveView.SelectPaths(new[] { target });
+            view.SelectPaths(new[] { target });
             Status(Loc.Get("Msg_Created"));
         }
         catch (Exception ex)
