@@ -239,20 +239,9 @@ public partial class MainWindow : Window
 
     // ---- Context menu ----
 
-    private static MenuItem MenuEntry(string key, string glyph, string? gesture, bool enabled, Action action)
+    private static MenuItem MenuEntry(string key, string? gesture, bool enabled, Action action)
     {
-        var icon = new TextBlock
-        {
-            Text = glyph,
-            FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"),
-            FontSize = 14,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        var item = new MenuItem
-        {
-            Header = Loc.Get(key), Icon = icon, InputGestureText = gesture ?? "", IsEnabled = enabled,
-        };
+        var item = new MenuItem { Header = Loc.Get(key), InputGestureText = gesture ?? "", IsEnabled = enabled };
         item.Click += (_, _) => action();
         return item;
     }
@@ -270,32 +259,31 @@ public partial class MainWindow : Window
         if (sel.Count > 0)
         {
             var first = sel[0];
-            var open = MenuEntry("Ctx_Open", "\uE8E5", null, true, () => _active.Open(first));
-            open.FontWeight = FontWeights.SemiBold;
-            menu.Items.Add(open);
+            menu.Items.Add(new MenuItem { Header = Loc.Get("Ctx_Open"), FontWeight = FontWeights.Bold });
+            ((MenuItem)menu.Items[0]).Click += (_, _) => _active.Open(first);
             if (!first.IsDirectory && sel.Count == 1)
-                menu.Items.Add(MenuEntry("Ctx_OpenWith", "\uE7AC", null, true, () => ShellVerb(first.FullPath, "openas")));
+                menu.Items.Add(MenuEntry("Ctx_OpenWith", null, true, () => ShellVerb(first.FullPath, "openas")));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Btn_Cut", "\uE8C6", "Ctrl+X", n > 0, () => PutOnClipboard(cut: true)));
-            menu.Items.Add(MenuEntry("Btn_Copy", "\uE8C8", "Ctrl+C", n > 0, () => PutOnClipboard(cut: false)));
+            menu.Items.Add(MenuEntry("Btn_Cut", "Ctrl+X", n > 0, () => PutOnClipboard(cut: true)));
+            menu.Items.Add(MenuEntry("Btn_Copy", "Ctrl+C", n > 0, () => PutOnClipboard(cut: false)));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Btn_CopyToOther", "\uE8C8", "F5", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(false)));
-            menu.Items.Add(MenuEntry("Btn_MoveToOther", "\uE8DE", "F6", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(true)));
+            menu.Items.Add(MenuEntry("Btn_CopyToOther", "F5", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(false)));
+            menu.Items.Add(MenuEntry("Btn_MoveToOther", "F6", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(true)));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Btn_Delete", "\uE74D", "Del", n > 0, () => _ = DeleteAsync()));
-            menu.Items.Add(MenuEntry("Btn_Rename", "\uE8AC", "F2", n == 1, Rename));
+            menu.Items.Add(MenuEntry("Btn_Delete", "Del", n > 0, () => _ = DeleteAsync()));
+            menu.Items.Add(MenuEntry("Btn_Rename", "F2", n == 1, Rename));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Ctx_Properties", "\uE90F", "Alt+Enter", sel.Count == 1,
+            menu.Items.Add(MenuEntry("Ctx_Properties", "Alt+Enter", sel.Count == 1,
                 () => ShellVerb(first.FullPath, "properties")));
         }
         else
         {
-            menu.Items.Add(MenuEntry("Btn_Refresh", "\uE72C", null, true, () => _active.Reload()));
+            menu.Items.Add(MenuEntry("Btn_Refresh", null, true, () => _active.Reload()));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Btn_Paste", "\uE77F", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
-            menu.Items.Add(MenuEntry("Btn_NewFolder", "\uE8F4", "F7", inFolder, NewFolder));
+            menu.Items.Add(MenuEntry("Btn_Paste", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
+            menu.Items.Add(MenuEntry("Btn_NewFolder", "F7", inFolder, NewFolder));
             menu.Items.Add(new Separator());
-            menu.Items.Add(MenuEntry("Ctx_Properties", "\uE90F", null, inFolder,
+            menu.Items.Add(MenuEntry("Ctx_Properties", null, inFolder,
                 () => ShellVerb(_active.CurrentPath, "properties")));
         }
     }
