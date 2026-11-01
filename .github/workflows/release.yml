@@ -47,7 +47,7 @@ jobs:
         run: vpk download github --repoUrl https://github.com/${{ github.repository }} --token ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pack
-        run: vpk pack --packId ScoutR --packVersion ${{ steps.v.outputs.version }} --packDir publish --mainExe ScoutR.exe
+        run: vpk pack --packId ScoutR --packVersion ${{ steps.v.outputs.version }} --packDir publish --mainExe ScoutR.exe --noInst
 
       - name: Upload to GitHub Releases
         run: >
