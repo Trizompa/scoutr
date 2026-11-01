@@ -26,11 +26,6 @@
   <data name="Btn_NewFolder" xml:space="preserve"><value>New folder</value></data>
   <data name="Btn_Refresh" xml:space="preserve"><value>Refresh</value></data>
 
-  <data name="Fk_Rename" xml:space="preserve"><value>Rename</value></data>
-  <data name="Fk_Copy" xml:space="preserve"><value>Copy</value></data>
-  <data name="Fk_Move" xml:space="preserve"><value>Move</value></data>
-  <data name="Fk_NewFolder" xml:space="preserve"><value>New folder</value></data>
-  <data name="Fk_Delete" xml:space="preserve"><value>Delete</value></data>
 
   <data name="Col_Name" xml:space="preserve"><value>Name</value></data>
   <data name="Col_Modified" xml:space="preserve"><value>Date modified</value></data>

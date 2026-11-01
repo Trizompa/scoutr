@@ -53,6 +53,7 @@ public partial class MainWindow : Window
     {
         SyncTree();
         Status(Loc.Get("Msg_Ready"));
+        VersionText.Text = "v" + AppInfo.Version;
         ViewA.FocusList();
 
         string? version = await _updater.CheckAsync();
@@ -92,7 +93,7 @@ public partial class MainWindow : Window
     private void SyncTree()
     {
         _tree.ShowFor(_active == _a ? "A" : "B", _active.CurrentPath);
-        Title = $"{_active.FolderName} - ScoutR";
+        Title = $"{_active.FolderName} - ScoutR {AppInfo.Version}";
     }
 
     private void TreeItem_Selected(object sender, RoutedEventArgs e)

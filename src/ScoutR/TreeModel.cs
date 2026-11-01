@@ -54,13 +54,13 @@ public sealed class TreeModel
                 }
 
                 CollapseAll(Root);
+                ClearSelection(Root);
                 _context = context;
 
                 if (_saved.TryGetValue(context, out var mine))
                     foreach (string folder in mine) WalkCore(folder, select: false);
             }
 
-            ClearSelection(Root);
             WalkCore(path, select: true);
         }
         finally

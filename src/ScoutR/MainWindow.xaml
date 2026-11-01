@@ -12,7 +12,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Ribbon: tab strip + grouped commands (Windows 10 Explorer style) -->
@@ -131,45 +130,13 @@
             <l:PaneView x:Name="ViewB" Grid.Column="4"/>
         </Grid>
 
-        <!-- Function keys -->
-        <UniformGrid Grid.Row="2" Rows="1" Background="{StaticResource ChromeBrush}">
-            <Button Style="{StaticResource FKeyBtn}" Click="Rename_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="F2" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
-                    <TextBlock Text="{l:T Fk_Rename}"/>
-                </StackPanel>
-            </Button>
-            <Button Style="{StaticResource FKeyBtn}" Click="CopyTo_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="F5" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
-                    <TextBlock Text="{l:T Fk_Copy}"/>
-                </StackPanel>
-            </Button>
-            <Button Style="{StaticResource FKeyBtn}" Click="MoveTo_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="F6" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
-                    <TextBlock Text="{l:T Fk_Move}"/>
-                </StackPanel>
-            </Button>
-            <Button Style="{StaticResource FKeyBtn}" Click="NewFolder_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="F7" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
-                    <TextBlock Text="{l:T Fk_NewFolder}"/>
-                </StackPanel>
-            </Button>
-            <Button Style="{StaticResource FKeyBtn}" Click="Delete_Click">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Del" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
-                    <TextBlock Text="{l:T Fk_Delete}"/>
-                </StackPanel>
-            </Button>
-        </UniformGrid>
-
         <!-- Status bar + update notice -->
-        <Border Grid.Row="3" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,3">
+        <Border Grid.Row="2" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,3">
             <DockPanel>
                 <Button x:Name="UpdateButton" DockPanel.Dock="Right" Visibility="Collapsed" Focusable="False"
                         Padding="10,1" Click="Update_Click"/>
+                <TextBlock x:Name="VersionText" DockPanel.Dock="Right" Margin="12,0,0,0"
+                           Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
                 <TextBlock x:Name="StatusText" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
