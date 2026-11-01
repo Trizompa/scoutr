@@ -13,6 +13,9 @@ public partial class PaneView : UserControl
         GotKeyboardFocus += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Raised when the selection in this pane changes.</summary>
+    public event EventHandler? SelectedItemsChanged;
+
     /// <summary>Raised when the user clicks or focuses this pane.</summary>
     public event EventHandler? Activated;
 
@@ -75,6 +78,7 @@ public partial class PaneView : UserControl
     {
         int n = ItemList.SelectedItems.Count;
         SelText.Text = n > 0 ? Loc.Get("Status_Selected", n) : "";
+        SelectedItemsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void BeginEditAddress()

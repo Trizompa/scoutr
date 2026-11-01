@@ -16,6 +16,9 @@
   <data name="Grp_New" xml:space="preserve"><value>New</value></data>
   <data name="Grp_View" xml:space="preserve"><value>View</value></data>
 
+  <data name="Btn_Swap" xml:space="preserve"><value>Swap panes</value></data>
+  <data name="Search_Placeholder" xml:space="preserve"><value>Search in {0}</value></data>
+
   <data name="Btn_Cut" xml:space="preserve"><value>Cut</value></data>
   <data name="Btn_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="Btn_Paste" xml:space="preserve"><value>Paste</value></data>

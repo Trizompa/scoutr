@@ -32,9 +32,9 @@
                             <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Clipboard}" HorizontalAlignment="Center"
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C6;" Content="{l:T Btn_Cut}" Click="Cut_Click"/>
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_Copy}" Click="CopyClip_Click"/>
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE77F;" Content="{l:T Btn_Paste}" Click="Paste_Click"/>
+                                <Button x:Name="BtnCut" Style="{StaticResource ToolBtn}" Tag="&#xE8C6;" Content="{l:T Btn_Cut}" Click="Cut_Click"/>
+                                <Button x:Name="BtnCopy" Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_Copy}" Click="CopyClip_Click"/>
+                                <Button x:Name="BtnPaste" Style="{StaticResource ToolBtn}" Tag="&#xE77F;" Content="{l:T Btn_Paste}" Click="Paste_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -43,8 +43,9 @@
                             <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Organize}" HorizontalAlignment="Center"
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_CopyToOther}" Click="CopyTo_Click"/>
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8DE;" Content="{l:T Btn_MoveToOther}" Click="MoveTo_Click"/>
+                                <Button x:Name="BtnCopyTo" Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_CopyToOther}" Click="CopyTo_Click"/>
+                                <Button x:Name="BtnMoveTo" Style="{StaticResource ToolBtn}" Tag="&#xE8DE;" Content="{l:T Btn_MoveToOther}" Click="MoveTo_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8AB;" Content="{l:T Btn_Swap}" Click="Swap_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -53,8 +54,8 @@
                             <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Edit}" HorizontalAlignment="Center"
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE74D;" Content="{l:T Btn_Delete}" Click="Delete_Click"/>
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8AC;" Content="{l:T Btn_Rename}" Click="Rename_Click"/>
+                                <Button x:Name="BtnDelete" Style="{StaticResource ToolBtn}" Tag="&#xE74D;" Content="{l:T Btn_Delete}" Click="Delete_Click"/>
+                                <Button x:Name="BtnRename" Style="{StaticResource ToolBtn}" Tag="&#xE8AC;" Content="{l:T Btn_Rename}" Click="Rename_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -63,7 +64,7 @@
                             <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_New}" HorizontalAlignment="Center"
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8F4;" Content="{l:T Btn_NewFolder}" Click="NewFolder_Click"/>
+                                <Button x:Name="BtnNewFolder" Style="{StaticResource ToolBtn}" Tag="&#xE8F4;" Content="{l:T Btn_NewFolder}" Click="NewFolder_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -116,7 +117,8 @@
                     </TreeView.Resources>
                     <TreeView.ItemContainerStyle>
                         <Style TargetType="TreeViewItem">
-                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                            <Setter Property="Padding" Value="2,2"/>
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                             <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                             <EventSetter Event="Selected" Handler="TreeItem_Selected"/>
                         </Style>

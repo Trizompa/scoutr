@@ -34,6 +34,7 @@ public sealed class PaneViewModel : ObservableObject
                 OnPropertyChanged(nameof(DisplayPath));
                 OnPropertyChanged(nameof(FolderName));
                 OnPropertyChanged(nameof(Crumbs));
+                OnPropertyChanged(nameof(SearchPlaceholder));
             }
         }
     }
@@ -60,6 +61,8 @@ public sealed class PaneViewModel : ObservableObject
             return list;
         }
     }
+
+    public string SearchPlaceholder => Loc.Get("Search_Placeholder", FolderName);
 
     public string DisplayPath => CurrentPath.Length == 0 ? Loc.Get("ThisPC") : CurrentPath;
 

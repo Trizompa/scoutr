@@ -38,6 +38,8 @@ public partial class MainWindow : Window
             pane.Error += (_, msg) => Status(Loc.Get("Msg_Error", msg));
         }
 
+        ViewA.SelectedItemsChanged += (_, _) => UpdateCommands();
+        ViewB.SelectedItemsChanged += (_, _) => UpdateCommands();
         ViewA.Activated += (_, _) => SetActive(_a);
         ViewB.Activated += (_, _) => SetActive(_b);
 
@@ -53,6 +55,7 @@ public partial class MainWindow : Window
     {
         SyncTree();
         Status(Loc.Get("Msg_Ready"));
+        UpdateCommands();
         VersionText.Text = "v" + AppInfo.Version;
         ViewA.FocusList();
 
@@ -94,6 +97,7 @@ public partial class MainWindow : Window
     {
         _tree.ShowFor(_active == _a ? "A" : "B", _active.CurrentPath);
         Title = $"{_active.FolderName} - ScoutR {AppInfo.Version}";
+        UpdateCommands();
     }
 
     private void TreeItem_Selected(object sender, RoutedEventArgs e)
@@ -103,6 +107,25 @@ public partial class MainWindow : Window
     }
 
     private void Status(string text) => StatusText.Text = text;
+
+    /// <summary>Greys out ribbon buttons that cannot act on the current selection.</summary>
+    private void UpdateCommands()
+    {
+        int n = ActiveView.SelectedItems.Count(i => !i.IsDrive);
+        bool inFolder = _active.CurrentPath.Length > 0;
+        bool otherInFolder = Other.CurrentPath.Length > 0;
+
+        BtnCut.IsEnabled = n > 0;
+        BtnCopy.IsEnabled = n > 0;
+        BtnPaste.IsEnabled = _clipboard is not null && inFolder;
+        BtnCopyTo.IsEnabled = n > 0 && otherInFolder;
+        BtnMoveTo.IsEnabled = n > 0 && otherInFolder;
+        BtnDelete.IsEnabled = n > 0;
+        BtnRename.IsEnabled = n == 1;
+        BtnNewFolder.IsEnabled = inFolder;
+    }
+
+    private void Swap_Click(object sender, RoutedEventArgs e) => OtherView.FocusList();
 
     // ---- Keyboard ----
 
@@ -208,6 +231,7 @@ public partial class MainWindow : Window
         var paths = SelectedPaths();
         if (paths.Count == 0) return;
         _clipboard = (paths, cut);
+        UpdateCommands();
         Status(Loc.Get("Msg_Clipboard", paths.Count));
     }
 
@@ -216,6 +240,7 @@ public partial class MainWindow : Window
         if (_clipboard is not { } clip || _active.CurrentPath.Length == 0) return;
         string dest = _active.CurrentPath;
         if (clip.Cut) _clipboard = null;
+        UpdateCommands();
 
         await RunAsync(() => TransferAll(clip.Paths, dest, clip.Cut), "Msg_Pasted");
     }

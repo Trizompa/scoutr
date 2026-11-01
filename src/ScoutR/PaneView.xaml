@@ -111,6 +111,20 @@
                 <TextBox Height="26" VerticalContentAlignment="Center" Padding="4,0,22,0"
                          BorderBrush="{StaticResource LineBrush}" ToolTip="{l:T Tip_Filter}"
                          Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="{Binding SearchPlaceholder}" Margin="6,0,24,0" VerticalAlignment="Center"
+                           IsHitTestVisible="False" TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource MutedBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Filter}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,7,0"
                            HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False"
                            Foreground="{StaticResource MutedBrush}"/>
