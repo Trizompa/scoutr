@@ -213,7 +213,8 @@ public partial class MainWindow : Window
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
             case Key.System when e.SystemKey == Key.Enter && !inText:
                 var sel = ActiveView.SelectedItems;
-                ShellVerb(sel.Count == 1 ? sel[0].FullPath : _active.CurrentPath, "properties");
+                string target = sel.Count == 1 ? sel[0].FullPath : _active.CurrentPath;
+                if (target.Length > 0) ShellVerb(target, "properties");
                 e.Handled = true;
                 break;
         }
