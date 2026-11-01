@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        if (AppIcon.Load() is { } icon) Icon = icon; // Explorer icon, recoloured green
 
         // After an update the app restarts with --maximized if it was maximized before.
         if (Environment.GetCommandLineArgs().Contains("--maximized")) WindowState = WindowState.Maximized;
