@@ -49,6 +49,9 @@ public sealed class FsItem
     public string SizeText => Size is long s ? FormatSize(s) : "";
     public string ModifiedText => Modified?.ToString("g", CultureInfo.CurrentCulture) ?? "";
 
+    public bool IsFolderShape => IsDirectory;
+    public bool IsFileShape => !IsDirectory;
+
     public string Glyph => IsDrive ? "" : IsDirectory ? "" : "";
 
     public Brush GlyphBrush =>

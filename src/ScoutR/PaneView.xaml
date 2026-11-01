@@ -71,7 +71,8 @@
                     ToolTip="{l:T Tip_Back}" Click="Back_Click" IsEnabled="{Binding CanGoBack}"/>
             <Button Grid.Column="1" Style="{StaticResource NavBtn}" Content="&#xE74A;"
                     ToolTip="{l:T Tip_Up}" Click="Up_Click"/>
-            <Border Grid.Column="2" Margin="4,0" BorderThickness="1" Background="White" Height="26">
+            <Border Grid.Column="2" Margin="4,0" BorderThickness="1" Background="White" Height="26"
+                    MouseLeftButtonDown="AddressBorder_MouseDown">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
@@ -82,13 +83,38 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                <TextBox x:Name="AddressBox" Text="{Binding DisplayPath, Mode=OneWay}" BorderThickness="0"
-                         VerticalContentAlignment="Center" Padding="4,0" KeyDown="AddressBox_KeyDown"
-                         GotKeyboardFocus="AddressBox_GotFocus"/>
+                <Grid>
+                    <ItemsControl x:Name="CrumbBar" ItemsSource="{Binding Crumbs}" VerticalAlignment="Center"
+                                  ClipToBounds="True" Margin="2,0" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Style="{StaticResource CrumbBtn}" Content="{Binding Name}"
+                                            Tag="{Binding Target}" Click="Crumb_Click"/>
+                                    <TextBlock Text="&#xE76C;" FontFamily="Segoe MDL2 Assets" FontSize="8"
+                                               Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBox x:Name="AddressBox" Text="{Binding DisplayPath, Mode=OneWay}" BorderThickness="0"
+                             VerticalContentAlignment="Center" Padding="4,0" Visibility="Collapsed"
+                             KeyDown="AddressBox_KeyDown" LostKeyboardFocus="AddressBox_LostFocus"/>
+                </Grid>
             </Border>
-            <TextBox Grid.Column="3" Height="26" VerticalContentAlignment="Center" Padding="4,0"
-                     BorderBrush="{StaticResource LineBrush}" ToolTip="{l:T Tip_Filter}"
-                     Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"/>
+            <Grid Grid.Column="3">
+                <TextBox Height="26" VerticalContentAlignment="Center" Padding="4,0,22,0"
+                         BorderBrush="{StaticResource LineBrush}" ToolTip="{l:T Tip_Filter}"
+                         Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"/>
+                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,7,0"
+                           HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False"
+                           Foreground="{StaticResource MutedBrush}"/>
+            </Grid>
         </Grid>
 
         <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended"
@@ -101,8 +127,8 @@
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                               Foreground="{Binding GlyphBrush}" Width="22" VerticalAlignment="Center"/>
+                                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ItemIcon}"
+                                                    Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>

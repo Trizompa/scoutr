@@ -121,5 +121,42 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Filled folder / coloured document icon, drawn so it looks like Explorer (needs GlyphBrush, IsFolderShape, IsFileShape) -->
+        <DataTemplate x:Key="ItemIcon">
+            <Viewbox Width="16" Height="16">
+                <Canvas Width="24" Height="24">
+                    <Path Data="M2,5 L9,5 L11,7 L22,7 L22,19 L2,19 Z" Fill="{Binding GlyphBrush}"
+                          Visibility="{Binding IsFolderShape, Converter={StaticResource B2V}}"/>
+                    <Path Data="M2,9 L22,9 L22,19 L2,19 Z" Fill="#40FFFFFF"
+                          Visibility="{Binding IsFolderShape, Converter={StaticResource B2V}}"/>
+                    <Path Data="M5,2 L14,2 L19,7 L19,22 L5,22 Z" Fill="White" Stroke="{Binding GlyphBrush}"
+                          StrokeThickness="1.5" Visibility="{Binding IsFileShape, Converter={StaticResource B2V}}"/>
+                    <Path Data="M14,2 L14,7 L19,7" Stroke="{Binding GlyphBrush}" StrokeThickness="1.5"
+                          Visibility="{Binding IsFileShape, Converter={StaticResource B2V}}"/>
+                    <Rectangle Canvas.Left="5.7" Canvas.Top="15" Width="12.6" Height="6.3" Fill="{Binding GlyphBrush}"
+                               Visibility="{Binding IsFileShape, Converter={StaticResource B2V}}"/>
+                </Canvas>
+            </Viewbox>
+        </DataTemplate>
+
+        <!-- Address bar segment -->
+        <Style x:Key="CrumbBtn" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" Padding="5,2">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>

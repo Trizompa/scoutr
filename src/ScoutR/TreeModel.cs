@@ -156,6 +156,8 @@ public sealed class TreeNodeVm : ObservableObject
     public bool IsDummy { get; }
     public ObservableCollection<TreeNodeVm> Children { get; } = new();
 
+    public bool IsFolderShape => !IsRoot && !IsDummy;
+
     public string Glyph => IsRoot ? "\uE7F4" : Path.Length <= 3 && Path.EndsWith('\\') ? "\uEDA2" : "\uE8B7";
 
     public Brush GlyphBrush => IsRoot ? Palette.Root : Glyph == "\uEDA2" ? Palette.Drive : Palette.Folder;

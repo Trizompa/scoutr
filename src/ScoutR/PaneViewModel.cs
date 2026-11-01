@@ -3,6 +3,9 @@ using System.IO;
 
 namespace ScoutR;
 
+/// <summary>One clickable segment of the address bar.</summary>
+public sealed record Crumb(string Name, string Target);
+
 /// <summary>State of one folder pane: current folder, its items, filter, history.</summary>
 public sealed class PaneViewModel : ObservableObject
 {
@@ -30,7 +33,31 @@ public sealed class PaneViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(DisplayPath));
                 OnPropertyChanged(nameof(FolderName));
+                OnPropertyChanged(nameof(Crumbs));
             }
+        }
+    }
+
+    /// <summary>"This PC", then the drive, then each folder down to the current one.</summary>
+    public List<Crumb> Crumbs
+    {
+        get
+        {
+            var list = new List<Crumb> { new(Loc.Get("ThisPC"), "") };
+            if (CurrentPath.Length == 0) return list;
+
+            string root = Path.GetPathRoot(CurrentPath) ?? "";
+            if (root.Length == 0) return list;
+
+            list.Add(new Crumb(root.TrimEnd('\\', '/'), root));
+            string current = root;
+            string rest = CurrentPath.Substring(root.Length);
+            foreach (string part in rest.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                current = Path.Combine(current, part);
+                list.Add(new Crumb(part, current));
+            }
+            return list;
         }
     }
 

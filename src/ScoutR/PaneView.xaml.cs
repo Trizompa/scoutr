@@ -77,23 +77,51 @@ public partial class PaneView : UserControl
         SelText.Text = n > 0 ? Loc.Get("Status_Selected", n) : "";
     }
 
+    private void BeginEditAddress()
+    {
+        CrumbBar.Visibility = Visibility.Hidden;
+        AddressBox.Visibility = Visibility.Visible;
+        AddressBox.Text = Vm?.DisplayPath ?? "";
+        AddressBox.Focus();
+        AddressBox.SelectAll();
+    }
+
+    private void EndEditAddress()
+    {
+        AddressBox.Visibility = Visibility.Collapsed;
+        CrumbBar.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>Click on the empty part of the address bar: type a path, like Explorer.</summary>
+    private void AddressBorder_MouseDown(object sender, MouseButtonEventArgs e)
+    {
+        if (AddressBox.Visibility != Visibility.Visible) BeginEditAddress();
+    }
+
+    private void Crumb_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string target }) Vm?.Navigate(target);
+    }
+
     private void AddressBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
         {
-            Vm?.NavigateFromText(AddressBox.Text);
+            string text = AddressBox.Text;
+            EndEditAddress();
+            Vm?.NavigateFromText(text);
             FocusList();
             e.Handled = true;
         }
         else if (e.Key == Key.Escape)
         {
-            AddressBox.Text = Vm?.DisplayPath ?? "";
+            EndEditAddress();
             FocusList();
             e.Handled = true;
         }
     }
 
-    private void AddressBox_GotFocus(object sender, KeyboardFocusChangedEventArgs e) => AddressBox.SelectAll();
+    private void AddressBox_LostFocus(object sender, KeyboardFocusChangedEventArgs e) => EndEditAddress();
 
     private void Back_Click(object sender, RoutedEventArgs e) => Vm?.GoBack();
 
