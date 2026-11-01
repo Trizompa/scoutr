@@ -216,7 +216,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
-                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,7" Margin="0,1">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,3" Margin="0">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -245,7 +245,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Separator">
-                        <Border Height="1" Background="#E5E5E5" Margin="-4,4"/>
+                        <Border Height="1" Background="#E5E5E5" Margin="-4,3"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
