@@ -11,7 +11,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ListViewItem">
                         <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent"
-                                BorderThickness="1" Padding="0,2">
+                                BorderThickness="1" Padding="0,3">
                             <GridViewRowPresenter Content="{TemplateBinding Content}"
                                                   Columns="{TemplateBinding GridView.ColumnCollection}"/>
                         </Border>

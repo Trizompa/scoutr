@@ -44,9 +44,9 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent"
-                                BorderThickness="1" MinWidth="58" Padding="6,4">
+                                BorderThickness="1" MinWidth="62" Padding="6,4">
                             <StackPanel HorizontalAlignment="Center">
-                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="20"
+                                <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="26"
                                            Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center"/>
                                 <ContentPresenter HorizontalAlignment="Center" Margin="0,3,0,0"
                                                   TextElement.FontSize="11"/>
@@ -77,6 +77,41 @@
                                 BorderThickness="0,0,1,0">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Flat column header (no gradient, thin separators) -->
+        <Style TargetType="GridViewColumnHeader">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="GridViewColumnHeader">
+                        <Grid>
+                            <Border x:Name="Bd" Background="White" BorderBrush="{StaticResource LineBrush}"
+                                    BorderThickness="0,0,0,1" Padding="8,4">
+                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  RecognizesAccessKey="True"/>
+                            </Border>
+                            <Thumb x:Name="PART_HeaderGripper" HorizontalAlignment="Right" Width="8"
+                                   Margin="0,0,-4,0" Background="Transparent" Cursor="SizeWE">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="Transparent">
+                                            <Rectangle Width="1" Margin="0,3" HorizontalAlignment="Center"
+                                                       Fill="{StaticResource LineBrush}"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>

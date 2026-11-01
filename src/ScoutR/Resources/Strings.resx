@@ -9,6 +9,15 @@
   <data name="ThisPC" xml:space="preserve"><value>This PC</value></data>
   <data name="Tree_Header" xml:space="preserve"><value>Folders</value></data>
 
+  <data name="Tab_Home" xml:space="preserve"><value>Home</value></data>
+  <data name="Grp_Clipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="Grp_Organize" xml:space="preserve"><value>Organize</value></data>
+  <data name="Grp_Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="Grp_New" xml:space="preserve"><value>New</value></data>
+  <data name="Grp_View" xml:space="preserve"><value>View</value></data>
+  <data name="Tree_Active" xml:space="preserve"><value>active</value></data>
+  <data name="Tree_Other" xml:space="preserve"><value>other</value></data>
+
   <data name="Btn_Cut" xml:space="preserve"><value>Cut</value></data>
   <data name="Btn_Copy" xml:space="preserve"><value>Copy</value></data>
   <data name="Btn_Paste" xml:space="preserve"><value>Paste</value></data>

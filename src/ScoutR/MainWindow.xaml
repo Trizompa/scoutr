@@ -4,6 +4,8 @@
         xmlns:l="clr-namespace:ScoutR"
         Title="ScoutR" Width="1280" Height="780" MinWidth="900" MinHeight="500"
         Background="White" FontFamily="Segoe UI" FontSize="12"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display" TextOptions.TextRenderingMode="ClearType"
         PreviewKeyDown="Window_PreviewKeyDown" Loaded="Window_Loaded">
     <Grid>
         <Grid.RowDefinitions>
@@ -13,24 +15,71 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Toolbar -->
-        <Border Grid.Row="0" Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
-                BorderThickness="0,0,0,1" Padding="6,4,6,2">
-            <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C6;" Content="{l:T Btn_Cut}" Click="Cut_Click"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_Copy}" Click="CopyClip_Click"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE77F;" Content="{l:T Btn_Paste}" Click="Paste_Click"/>
-                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_CopyToOther}" Click="CopyTo_Click"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8DE;" Content="{l:T Btn_MoveToOther}" Click="MoveTo_Click"/>
-                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE74D;" Content="{l:T Btn_Delete}" Click="Delete_Click"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8AC;" Content="{l:T Btn_Rename}" Click="Rename_Click"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8F4;" Content="{l:T Btn_NewFolder}" Click="NewFolder_Click"/>
-                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
-                <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
-            </StackPanel>
-        </Border>
+        <!-- Ribbon: tab strip + grouped commands (Windows 10 Explorer style) -->
+        <StackPanel Grid.Row="0">
+            <Border Background="White" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,0,1">
+                <StackPanel Orientation="Horizontal" Margin="6,2,0,0">
+                    <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
+                            BorderThickness="1,1,1,0" Padding="16,4,16,5" Margin="0,0,0,-1">
+                        <TextBlock Text="{l:T Tab_Home}" Foreground="{StaticResource AccentBrush}"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+            <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
+                    BorderThickness="0,0,0,1" Padding="4,4,4,0">
+                <StackPanel Orientation="Horizontal">
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="4,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Clipboard}" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C6;" Content="{l:T Btn_Cut}" Click="Cut_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_Copy}" Click="CopyClip_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE77F;" Content="{l:T Btn_Paste}" Click="Paste_Click"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="4,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Organize}" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_CopyToOther}" Click="CopyTo_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8DE;" Content="{l:T Btn_MoveToOther}" Click="MoveTo_Click"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="4,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_Edit}" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE74D;" Content="{l:T Btn_Delete}" Click="Delete_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8AC;" Content="{l:T Btn_Rename}" Click="Rename_Click"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="4,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_New}" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8F4;" Content="{l:T Btn_NewFolder}" Click="NewFolder_Click"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,0,1,0" Padding="4,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Bottom" Text="{l:T Grp_View}" HorizontalAlignment="Center"
+                                       Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </StackPanel>
 
         <!-- Tree | Pane A | Pane B -->
         <Grid Grid.Row="1">
@@ -42,32 +91,43 @@
                 <ColumnDefinition Width="*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
 
-            <TreeView x:Name="Tree" Grid.Column="0" BorderThickness="0" Padding="0,4">
-                <TreeView.Resources>
-                    <!-- Selection colours (tree follows the active pane, so it uses the accent tint) -->
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#CCE8FF"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#CCE8FF"/>
-                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="Black"/>
-                    <HierarchicalDataTemplate DataType="{x:Type l:TreeNodeVm}" ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal" Margin="0,1">
-                            <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
-                                       Foreground="{Binding GlyphBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                            <TextBlock Text=" &#x25CF;" Foreground="{StaticResource AccentBrush}" Opacity="0.55"
-                                       VerticalAlignment="Center"
-                                       Visibility="{Binding IsOther, Converter={StaticResource B2V}}"/>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.Resources>
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="TreeViewItem">
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
-                        <EventSetter Event="Selected" Handler="TreeItem_Selected"/>
-                    </Style>
-                </TreeView.ItemContainerStyle>
-            </TreeView>
+            <DockPanel Grid.Column="0">
+                <Grid DockPanel.Dock="Top" Margin="10,6,10,4">
+                    <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" Margin="0,0,4,0"/>
+                        <TextBlock Text="{l:T Tree_Active}" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,0,10,0"/>
+                        <Ellipse Width="7" Height="7" Fill="{StaticResource AccentBrush}" Opacity="0.5" Margin="0,0,4,0"/>
+                        <TextBlock Text="{l:T Tree_Other}" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                    </StackPanel>
+                </Grid>
+                <TreeView x:Name="Tree" BorderThickness="0" Padding="0,2">
+                    <TreeView.Resources>
+                        <!-- Selection colours (tree follows the active pane, so it uses the accent tint) -->
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#CCE8FF"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#CCE8FF"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="Black"/>
+                        <HierarchicalDataTemplate DataType="{x:Type l:TreeNodeVm}" ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal" Margin="0,1">
+                                <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                           Foreground="{Binding GlyphBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Text=" &#x25CF;" Foreground="{StaticResource AccentBrush}" Opacity="0.55"
+                                           VerticalAlignment="Center"
+                                           Visibility="{Binding IsOther, Converter={StaticResource B2V}}"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.Resources>
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                            <EventSetter Event="Selected" Handler="TreeItem_Selected"/>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                </TreeView>
+            </DockPanel>
 
             <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
             <l:PaneView x:Name="ViewA" Grid.Column="2"/>
