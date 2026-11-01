@@ -134,15 +134,20 @@
         <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended"
                   ItemsSource="{Binding Items}" ItemContainerStyle="{StaticResource RowStyle}"
                   Tag="{Binding IsActive}" SelectionChanged="ItemList_SelectionChanged"
-                  KeyDown="ItemList_KeyDown" VirtualizingPanel.IsVirtualizing="True">
+                  KeyDown="ItemList_KeyDown" VirtualizingPanel.IsVirtualizing="True"
+                  PreviewMouseRightButtonDown="ItemList_RightDown">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="{l:T Col_Name}" Width="230">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
-                                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ItemIcon}"
-                                                    Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <Grid Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
+                                        <Image Source="{Binding Icon}" RenderOptions.BitmapScalingMode="HighQuality"
+                                               Visibility="{Binding HasIcon, Converter={StaticResource B2V}}"/>
+                                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource ItemIcon}"
+                                                        Visibility="{Binding NoIcon, Converter={StaticResource B2V}}"/>
+                                    </Grid>
                                     <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
@@ -151,6 +156,7 @@
                     </GridViewColumn>
                     <GridViewColumn Header="{l:T Col_Modified}" Width="130"
                                     DisplayMemberBinding="{Binding ModifiedText}"/>
+                    <GridViewColumn Header="{l:T Col_Type}" Width="140" DisplayMemberBinding="{Binding TypeText}"/>
                     <GridViewColumn Header="{l:T Col_Size}" Width="80" DisplayMemberBinding="{Binding SizeText}"/>
                 </GridView>
             </ListView.View>

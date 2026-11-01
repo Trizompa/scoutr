@@ -46,6 +46,13 @@ public partial class MainWindow : Window
         ViewA.Activated += (_, _) => SetActive(_a);
         ViewB.Activated += (_, _) => SetActive(_b);
 
+        foreach (var view in new[] { ViewA, ViewB })
+        {
+            var menu = new ContextMenu();
+            view.ItemList.ContextMenu = menu;
+            view.ItemList.ContextMenuOpening += (_, _) => BuildMenu(menu);
+        }
+
         // Clicking a folder in the tree navigates the active pane.
         _tree.UserNavigated += path => _active.Navigate(path);
     }
@@ -204,6 +211,11 @@ public partial class MainWindow : Window
             case Key.C when ctrl && !inText: PutOnClipboard(cut: false); e.Handled = true; break;
             case Key.X when ctrl && !inText: PutOnClipboard(cut: true); e.Handled = true; break;
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
+            case Key.System when e.SystemKey == Key.Enter && !inText:
+                var sel = ActiveView.SelectedItems;
+                ShellVerb(sel.Count == 1 ? sel[0].FullPath : _active.CurrentPath, "properties");
+                e.Handled = true;
+                break;
         }
     }
 
@@ -222,6 +234,69 @@ public partial class MainWindow : Window
     {
         _a.Reload();
         _b.Reload();
+    }
+
+    // ---- Context menu ----
+
+    private static MenuItem MenuEntry(string key, string? gesture, bool enabled, Action action)
+    {
+        var item = new MenuItem { Header = Loc.Get(key), InputGestureText = gesture ?? "", IsEnabled = enabled };
+        item.Click += (_, _) => action();
+        return item;
+    }
+
+    /// <summary>Right-click menu: acts on the selection, or on the current folder if nothing is selected.</summary>
+    private void BuildMenu(ContextMenu menu)
+    {
+        menu.Items.Clear();
+        var view = ActiveView;
+        var sel = view.SelectedItems;
+        int n = sel.Count(i => !i.IsDrive);
+        bool inFolder = _active.CurrentPath.Length > 0;
+        bool otherInFolder = Other.CurrentPath.Length > 0;
+
+        if (sel.Count > 0)
+        {
+            var first = sel[0];
+            menu.Items.Add(new MenuItem { Header = Loc.Get("Ctx_Open"), FontWeight = FontWeights.Bold });
+            ((MenuItem)menu.Items[0]).Click += (_, _) => _active.Open(first);
+            if (!first.IsDirectory && sel.Count == 1)
+                menu.Items.Add(MenuEntry("Ctx_OpenWith", null, true, () => ShellVerb(first.FullPath, "openas")));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Btn_Cut", "Ctrl+X", n > 0, () => PutOnClipboard(cut: true)));
+            menu.Items.Add(MenuEntry("Btn_Copy", "Ctrl+C", n > 0, () => PutOnClipboard(cut: false)));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Btn_CopyToOther", "F5", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(false)));
+            menu.Items.Add(MenuEntry("Btn_MoveToOther", "F6", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(true)));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Btn_Delete", "Del", n > 0, () => _ = DeleteAsync()));
+            menu.Items.Add(MenuEntry("Btn_Rename", "F2", n == 1, Rename));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Ctx_Properties", "Alt+Enter", sel.Count == 1,
+                () => ShellVerb(first.FullPath, "properties")));
+        }
+        else
+        {
+            menu.Items.Add(MenuEntry("Btn_Refresh", null, true, () => _active.Reload()));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Btn_Paste", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
+            menu.Items.Add(MenuEntry("Btn_NewFolder", "F7", inFolder, NewFolder));
+            menu.Items.Add(new Separator());
+            menu.Items.Add(MenuEntry("Ctx_Properties", null, inFolder,
+                () => ShellVerb(_active.CurrentPath, "properties")));
+        }
+    }
+
+    private void ShellVerb(string path, string verb)
+    {
+        try
+        {
+            ShellInfo.Verb(path, verb, new System.Windows.Interop.WindowInteropHelper(this).Handle);
+        }
+        catch (Exception ex)
+        {
+            Status(Loc.Get("Msg_Error", ex.Message));
+        }
     }
 
     // ---- File operations ----

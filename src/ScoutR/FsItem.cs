@@ -47,6 +47,25 @@ public sealed class FsItem
     public DateTime? Modified { get; init; }
 
     public string SizeText => Size is long s ? FormatSize(s) : "";
+
+    private string? _typeText;
+    /// <summary>Windows type name, e.g. "File folder", "Text Document". Read when first shown.</summary>
+    public string TypeText => _typeText ??= ShellInfo.TypeName(this);
+
+    private bool _iconRead;
+    private System.Windows.Media.Imaging.BitmapSource? _icon;
+    /// <summary>Windows icon for this item; null means use the drawn icon.</summary>
+    public System.Windows.Media.Imaging.BitmapSource? Icon
+    {
+        get
+        {
+            if (!_iconRead) { _icon = ShellInfo.Icon(this); _iconRead = true; }
+            return _icon;
+        }
+    }
+
+    public bool HasIcon => Icon is not null;
+    public bool NoIcon => Icon is null;
     public string ModifiedText => Modified?.ToString("g", CultureInfo.CurrentCulture) ?? "";
 
     public bool IsFolderShape => IsDirectory;

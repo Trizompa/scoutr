@@ -74,6 +74,15 @@ public partial class PaneView : UserControl
         }
     }
 
+    /// <summary>Right-click on empty space clears the selection, so the menu acts on the folder itself.</summary>
+    private void ItemList_RightDown(object sender, MouseButtonEventArgs e)
+    {
+        var hit = e.OriginalSource as DependencyObject;
+        while (hit is not null && hit is not ListViewItem && hit != ItemList)
+            hit = System.Windows.Media.VisualTreeHelper.GetParent(hit);
+        if (hit is not ListViewItem) ItemList.SelectedItems.Clear();
+    }
+
     private void ItemList_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         int n = ItemList.SelectedItems.Count;
