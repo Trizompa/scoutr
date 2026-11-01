@@ -113,7 +113,10 @@ public static class FileOps
     {
         if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
             throw new IOException("The name contains invalid characters.");
-        string target = UniqueTarget(parent, name, true);
+        // Like Explorer: "New folder", "New folder (2)", "New folder (3)"...
+        string target = Path.Combine(parent, name);
+        for (int i = 2; File.Exists(target) || Directory.Exists(target); i++)
+            target = Path.Combine(parent, $"{name} ({i})");
         Directory.CreateDirectory(target);
         return target;
     }
