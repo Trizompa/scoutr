@@ -31,7 +31,6 @@ public sealed class TreeModel
         if (!Suppress) UserNavigated?.Invoke(path);
     }
 
-    private readonly Dictionary<string, HashSet<string>> _saved = new();
     private string? _context;
 
     /// <summary>
@@ -44,23 +43,11 @@ public sealed class TreeModel
         Suppress = true;
         try
         {
-            if (_context != context)
-            {
-                if (_context is not null)
-                {
-                    var open = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    CollectExpanded(Root, open);
-                    _saved[_context] = open;
-                }
-
-                CollapseAll(Root);
-                ClearSelection(Root);
-                _context = context;
-
-                if (_saved.TryGetValue(context, out var mine))
-                    foreach (string folder in mine) WalkCore(folder, select: false);
-            }
-
+            // Only the path to the pane's current folder stays open: everything else is collapsed,
+            // so nothing from the other pane (or from older folders) is left expanded.
+            if (_context != context) ClearSelection(Root);
+            _context = context;
+            CollapseExcept(Root, new HashSet<string>(Chain(path), StringComparer.OrdinalIgnoreCase));
             WalkCore(path, select: true);
         }
         finally
@@ -87,23 +74,13 @@ public sealed class TreeModel
         if (select) node.IsSelected = true;
     }
 
-    private static void CollectExpanded(TreeNodeVm node, HashSet<string> into)
+    private static void CollapseExcept(TreeNodeVm node, HashSet<string> keep)
     {
         foreach (var child in node.Children)
         {
-            if (child.IsDummy) continue;
-            if (child.IsExpanded) into.Add(child.Path);
-            CollectExpanded(child, into);
-        }
-    }
-
-    private static void CollapseAll(TreeNodeVm node)
-    {
-        foreach (var child in node.Children)
-        {
-            if (child.IsDummy) continue;
-            child.IsExpanded = false;
-            CollapseAll(child);
+            if (child.IsDummy || !child.IsExpanded) continue;
+            if (!keep.Contains(child.Path)) child.IsExpanded = false;
+            CollapseExcept(child, keep);
         }
     }
 
