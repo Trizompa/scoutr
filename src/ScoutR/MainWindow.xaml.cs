@@ -290,11 +290,35 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>The Properties sheet opens a moment later where Windows likes; move it to the middle of the pane.</summary>
+    private static void CenterNewWindow(HashSet<IntPtr> before, PaneView pane)
+    {
+        var topLeft = pane.PointToScreen(new Point(0, 0));
+        var bottomRight = pane.PointToScreen(new Point(pane.ActualWidth, pane.ActualHeight));
+        var area = new Rect(topLeft, bottomRight);
+
+        int tries = 0;
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
+        timer.Tick += (_, _) =>
+        {
+            var added = ShellInfo.OwnWindows().Where(h => !before.Contains(h)).ToList();
+            if (added.Count > 0)
+            {
+                foreach (var h in added) ShellInfo.CenterOn(h, area);
+                timer.Stop();
+            }
+            else if (++tries > 100) timer.Stop(); // ~3 s
+        };
+        timer.Start();
+    }
+
     private void ShellVerb(string path, string verb)
     {
         try
         {
+            var before = ShellInfo.OwnWindows();
             ShellInfo.Verb(path, verb, new System.Windows.Interop.WindowInteropHelper(this).Handle);
+            if (verb == "properties") CenterNewWindow(before, ActiveView);
         }
         catch (Exception ex)
         {

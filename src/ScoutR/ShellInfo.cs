@@ -133,6 +133,39 @@ public static class ShellInfo
 
     private const uint SeeMaskInvokeIdList = 0x0C;
 
+    private delegate bool EnumProc(IntPtr hwnd, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumProc proc, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern bool GetWindowRect(IntPtr hwnd, out Rect32 rect);
+    [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect32 { public int Left, Top, Right, Bottom; }
+
+    /// <summary>Visible top-level windows of this process (the Properties sheet runs inside ScoutR).</summary>
+    public static HashSet<IntPtr> OwnWindows()
+    {
+        uint me = (uint)Environment.ProcessId;
+        var set = new HashSet<IntPtr>();
+        EnumWindows((h, _) =>
+        {
+            GetWindowThreadProcessId(h, out uint pid);
+            if (pid == me && IsWindowVisible(h)) set.Add(h);
+            return true;
+        }, IntPtr.Zero);
+        return set;
+    }
+
+    /// <summary>Centres a window on a rectangle given in screen pixels.</summary>
+    public static void CenterOn(IntPtr hwnd, Rect area)
+    {
+        if (!GetWindowRect(hwnd, out var r)) return;
+        int w = r.Right - r.Left, h = r.Bottom - r.Top;
+        int x = (int)(area.Left + (area.Width - w) / 2), y = (int)(area.Top + (area.Height - h) / 2);
+        SetWindowPos(hwnd, IntPtr.Zero, x, Math.Max((int)area.Top, y), 0, 0, 0x0001 | 0x0004 | 0x0010); // no size/z-order/activate
+    }
+
     /// <summary>Runs a shell verb such as "properties" or "openas" on a file or folder.</summary>
     public static void Verb(string path, string verb, IntPtr owner)
     {
