@@ -1,0 +1,121 @@
+<Window x:Class="ScoutR.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:ScoutR"
+        Title="ScoutR" Width="1280" Height="780" MinWidth="900" MinHeight="500"
+        Background="White" FontFamily="Segoe UI" FontSize="12"
+        PreviewKeyDown="Window_PreviewKeyDown" Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <Border Grid.Row="0" Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
+                BorderThickness="0,0,0,1" Padding="6,4,6,2">
+            <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C6;" Content="{l:T Btn_Cut}" Click="Cut_Click"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_Copy}" Click="CopyClip_Click"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE77F;" Content="{l:T Btn_Paste}" Click="Paste_Click"/>
+                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8C8;" Content="{l:T Btn_CopyToOther}" Click="CopyTo_Click"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8DE;" Content="{l:T Btn_MoveToOther}" Click="MoveTo_Click"/>
+                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE74D;" Content="{l:T Btn_Delete}" Click="Delete_Click"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8AC;" Content="{l:T Btn_Rename}" Click="Rename_Click"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE8F4;" Content="{l:T Btn_NewFolder}" Click="NewFolder_Click"/>
+                <Rectangle Width="1" Margin="6,4" Fill="{StaticResource LineBrush}"/>
+                <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Tree | Pane A | Pane B -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" MinWidth="120"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MinWidth="200"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*" MinWidth="200"/>
+            </Grid.ColumnDefinitions>
+
+            <TreeView x:Name="Tree" Grid.Column="0" BorderThickness="0" Padding="0,4">
+                <TreeView.Resources>
+                    <!-- Selection colours (tree follows the active pane, so it uses the accent tint) -->
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#CCE8FF"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#CCE8FF"/>
+                    <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="Black"/>
+                    <HierarchicalDataTemplate DataType="{x:Type l:TreeNodeVm}" ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal" Margin="0,1">
+                            <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                       Foreground="{Binding GlyphBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            <TextBlock Text=" &#x25CF;" Foreground="{StaticResource AccentBrush}" Opacity="0.55"
+                                       VerticalAlignment="Center"
+                                       Visibility="{Binding IsOther, Converter={StaticResource B2V}}"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.Resources>
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                        <EventSetter Event="Selected" Handler="TreeItem_Selected"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+            </TreeView>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
+            <l:PaneView x:Name="ViewA" Grid.Column="2"/>
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
+            <l:PaneView x:Name="ViewB" Grid.Column="4"/>
+        </Grid>
+
+        <!-- Function keys -->
+        <UniformGrid Grid.Row="2" Rows="1" Background="{StaticResource ChromeBrush}">
+            <Button Style="{StaticResource FKeyBtn}" Click="Rename_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="F2" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
+                    <TextBlock Text="{l:T Fk_Rename}"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource FKeyBtn}" Click="CopyTo_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="F5" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
+                    <TextBlock Text="{l:T Fk_Copy}"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource FKeyBtn}" Click="MoveTo_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="F6" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
+                    <TextBlock Text="{l:T Fk_Move}"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource FKeyBtn}" Click="NewFolder_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="F7" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
+                    <TextBlock Text="{l:T Fk_NewFolder}"/>
+                </StackPanel>
+            </Button>
+            <Button Style="{StaticResource FKeyBtn}" Click="Delete_Click">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Del" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}" Margin="0,0,6,0"/>
+                    <TextBlock Text="{l:T Fk_Delete}"/>
+                </StackPanel>
+            </Button>
+        </UniformGrid>
+
+        <!-- Status bar + update notice -->
+        <Border Grid.Row="3" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="10,3">
+            <DockPanel>
+                <Button x:Name="UpdateButton" DockPanel.Dock="Right" Visibility="Collapsed" Focusable="False"
+                        Padding="10,1" Click="Update_Click"/>
+                <TextBlock x:Name="StatusText" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

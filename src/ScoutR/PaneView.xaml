@@ -1,0 +1,126 @@
+<UserControl x:Class="ScoutR.PaneView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:l="clr-namespace:ScoutR">
+    <UserControl.Resources>
+        <!-- Row look: blue selection in the active pane, grey in the inactive one (like Explorer). -->
+        <Style x:Key="RowStyle" TargetType="ListViewItem">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <EventSetter Event="MouseDoubleClick" Handler="Row_DoubleClick"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListViewItem">
+                        <Border x:Name="Bd" Background="Transparent" BorderBrush="Transparent"
+                                BorderThickness="1" Padding="0,2">
+                            <GridViewRowPresenter Content="{TemplateBinding Content}"
+                                                  Columns="{TemplateBinding GridView.ColumnCollection}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelInactiveBrush}"/>
+                            </Trigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource TemplatedParent}}" Value="True"/>
+                                    <Condition Binding="{Binding Tag, RelativeSource={RelativeSource AncestorType=ListView}}" Value="True"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource SelBorderBrush}"/>
+                            </MultiDataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Active pane marker -->
+        <Border Grid.Row="0">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+        </Border>
+
+        <!-- Back / Up / address / filter -->
+        <Grid Grid.Row="1" Margin="6,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="130"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Style="{StaticResource NavBtn}" Content="&#xE72B;"
+                    ToolTip="{l:T Tip_Back}" Click="Back_Click" IsEnabled="{Binding CanGoBack}"/>
+            <Button Grid.Column="1" Style="{StaticResource NavBtn}" Content="&#xE74A;"
+                    ToolTip="{l:T Tip_Up}" Click="Up_Click"/>
+            <Border Grid.Column="2" Margin="4,0" BorderThickness="1" Background="White" Height="26">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBox x:Name="AddressBox" Text="{Binding DisplayPath, Mode=OneWay}" BorderThickness="0"
+                         VerticalContentAlignment="Center" Padding="4,0" KeyDown="AddressBox_KeyDown"
+                         GotKeyboardFocus="AddressBox_GotFocus"/>
+            </Border>
+            <TextBox Grid.Column="3" Height="26" VerticalContentAlignment="Center" Padding="4,0"
+                     BorderBrush="{StaticResource LineBrush}" ToolTip="{l:T Tip_Filter}"
+                     Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+
+        <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended"
+                  ItemsSource="{Binding Items}" ItemContainerStyle="{StaticResource RowStyle}"
+                  Tag="{Binding IsActive}" SelectionChanged="ItemList_SelectionChanged"
+                  KeyDown="ItemList_KeyDown" VirtualizingPanel.IsVirtualizing="True">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="{l:T Col_Name}" Width="230">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="14"
+                                               Foreground="{Binding GlyphBrush}" Width="22" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="{l:T Col_Modified}" Width="130"
+                                    DisplayMemberBinding="{Binding ModifiedText}"/>
+                    <GridViewColumn Header="{l:T Col_Size}" Width="80" DisplayMemberBinding="{Binding SizeText}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <Border Grid.Row="3" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="8,3">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding CountText}" Foreground="{StaticResource MutedBrush}"/>
+                <TextBlock x:Name="SelText" Margin="14,0,0,0" Foreground="{StaticResource MutedBrush}"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

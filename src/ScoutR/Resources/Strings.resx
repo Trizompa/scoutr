@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- Base language: English. Add Strings.it.resx with the same keys for Italian. -->
+  <data name="ThisPC" xml:space="preserve"><value>This PC</value></data>
+  <data name="Tree_Header" xml:space="preserve"><value>Folders</value></data>
+
+  <data name="Btn_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="Btn_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Btn_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="Btn_CopyToOther" xml:space="preserve"><value>Copy to other</value></data>
+  <data name="Btn_MoveToOther" xml:space="preserve"><value>Move to other</value></data>
+  <data name="Btn_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Btn_Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Btn_NewFolder" xml:space="preserve"><value>New folder</value></data>
+  <data name="Btn_Refresh" xml:space="preserve"><value>Refresh</value></data>
+
+  <data name="Fk_Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Fk_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Fk_Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Fk_NewFolder" xml:space="preserve"><value>New folder</value></data>
+  <data name="Fk_Delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="Col_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Col_Modified" xml:space="preserve"><value>Date modified</value></data>
+  <data name="Col_Size" xml:space="preserve"><value>Size</value></data>
+
+  <data name="Tip_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Tip_Up" xml:space="preserve"><value>Up one level</value></data>
+  <data name="Tip_Filter" xml:space="preserve"><value>Filter items in this folder</value></data>
+
+  <data name="Status_Items" xml:space="preserve"><value>{0} items</value></data>
+  <data name="Status_Selected" xml:space="preserve"><value>{0} selected</value></data>
+
+  <data name="Confirm_DeleteTitle" xml:space="preserve"><value>Delete</value></data>
+  <data name="Confirm_Delete" xml:space="preserve"><value>Move {0} item(s) to the Recycle Bin?</value></data>
+
+  <data name="Prompt_NewFolderTitle" xml:space="preserve"><value>New folder</value></data>
+  <data name="Prompt_NewFolderLabel" xml:space="preserve"><value>Folder name:</value></data>
+  <data name="Prompt_RenameTitle" xml:space="preserve"><value>Rename</value></data>
+  <data name="Prompt_RenameLabel" xml:space="preserve"><value>New name:</value></data>
+  <data name="NewFolderDefault" xml:space="preserve"><value>New folder</value></data>
+  <data name="Dlg_OK" xml:space="preserve"><value>OK</value></data>
+  <data name="Dlg_Cancel" xml:space="preserve"><value>Cancel</value></data>
+
+  <data name="Msg_Working" xml:space="preserve"><value>Working...</value></data>
+  <data name="Msg_Copied" xml:space="preserve"><value>{0} item(s) copied</value></data>
+  <data name="Msg_Moved" xml:space="preserve"><value>{0} item(s) moved</value></data>
+  <data name="Msg_Pasted" xml:space="preserve"><value>{0} item(s) pasted</value></data>
+  <data name="Msg_Deleted" xml:space="preserve"><value>{0} item(s) deleted</value></data>
+  <data name="Msg_Renamed" xml:space="preserve"><value>Renamed</value></data>
+  <data name="Msg_Created" xml:space="preserve"><value>Folder created</value></data>
+  <data name="Msg_Clipboard" xml:space="preserve"><value>{0} item(s) in the clipboard</value></data>
+  <data name="Msg_Error" xml:space="preserve"><value>Error: {0}</value></data>
+  <data name="Msg_Ready" xml:space="preserve"><value>Ready</value></data>
+
+  <data name="Update_Available" xml:space="preserve"><value>Update {0} available. Click to restart and update.</value></data>
+  <data name="Update_Downloading" xml:space="preserve"><value>Downloading update...</value></data>
+</root>

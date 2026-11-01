@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ScoutR</RootNamespace>
+    <AssemblyName>ScoutR</AssemblyName>
+    <Version>0.1.0</Version>
+    <StartupObject>ScoutR.Program</StartupObject>
+    <SatelliteResourceLanguages>en;it</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Auto-update (GitHub Releases). Pin an exact version once the first build works. -->
+    <PackageReference Include="Velopack" Version="0.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Custom Main() is needed so Velopack can run before WPF starts. -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+</Project>
