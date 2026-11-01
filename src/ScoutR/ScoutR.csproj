@@ -10,10 +10,12 @@
     <AssemblyName>ScoutR</AssemblyName>
     <Version>0.1.0</Version>
     <StartupObject>ScoutR.Program</StartupObject>
+    <ApplicationIcon>Assets\ScoutR.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en;it</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\ScoutR.ico" />
     <!-- Auto-update (GitHub Releases). Pin an exact version once the first build works. -->
     <PackageReference Include="Velopack" Version="0.0.*" />
   </ItemGroup>
