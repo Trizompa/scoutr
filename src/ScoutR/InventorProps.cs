@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.IO;
+using System.Reflection;
 
 namespace ScoutR;
 
@@ -35,9 +36,9 @@ public static class InventorProps
     public static bool IsInventorFile(string path) => Extensions.Contains(Path.GetExtension(path));
 
     private static readonly StaWorker Worker = new();
-    private static dynamic? _app;
+    private static object? _app;
 
-    private static dynamic App()
+    private static object App()
     {
         if (_app is null)
         {
@@ -62,33 +63,59 @@ public static class InventorProps
         return _app;
     }
 
+    // Plain IDispatch calls (late binding). Inventor's collections don't support "foreach" over COM,
+    // so they are walked with Count / Item(i), 1-based.
+    private static object? Get(object o, string name, params object[] args) =>
+        o.GetType().InvokeMember(name, BindingFlags.GetProperty, null, o, args);
+
+    private static void SetValue(object o, string name, object? value) =>
+        o.GetType().InvokeMember(name, BindingFlags.SetProperty, null, o, new[] { value });
+
+    private static object? Call(object o, string name, params object?[] args) =>
+        o.GetType().InvokeMember(name, BindingFlags.InvokeMethod, null, o, args);
+
+    private static IEnumerable<object> Items(object collection)
+    {
+        int count = Convert.ToInt32(Get(collection, "Count"));
+        for (int i = 1; i <= count; i++)
+            if (Get(collection, "Item", i) is { } item) yield return item;
+    }
+
+    private static object Open(string path) =>
+        Call((object)App(), "Open", path) ?? throw new IOException("Inventor Apprentice could not open the file.");
+
+    private static void Close(object doc)
+    {
+        try { Call(doc, "Close", true); } catch { /* already closed */ }
+    }
+
     public static Task<List<IPropValue>> ReadAsync(string path) => Worker.Run(() =>
     {
         var list = new List<IPropValue>();
-        dynamic doc = App().Open(path);
+        object doc = Open(path);
         try
         {
-            foreach (dynamic set in doc.PropertySets)
+            foreach (object set in Items(Get(doc, "PropertySets")!))
             {
-                string setName = set.Name;
+                string setName = Get(set, "Name") as string ?? "";
                 bool custom = setName == CustomSet;
                 if (!custom && setName != SummarySet && setName != DocSummarySet && setName != ProjectSet) continue;
 
-                foreach (dynamic p in set)
+                foreach (object p in Items(set))
                 {
-                    string name = p.Name;
+                    string name = Get(p, "Name") as string ?? "";
                     if (!custom && !SummaryNames.Contains(name) && !ProjectNames.Contains(name)) continue;
                     string label = name;
-                    try { string d = p.DisplayName; if (!string.IsNullOrWhiteSpace(d)) label = d; } catch { }
+                    try { if (Get(p, "DisplayName") is string d && !string.IsNullOrWhiteSpace(d)) label = d; } catch { }
                     object? value = null;
-                    try { value = p.Value; } catch { /* some properties have no value yet */ }
+                    try { value = Get(p, "Value"); } catch { /* some properties have no value yet */ }
                     list.Add(new IPropValue(setName, name, label, value, ReadOnlyNames.Contains(name)));
                 }
             }
         }
         finally
         {
-            doc.Close(true);
+            Close(doc);
         }
         return list;
     });
@@ -100,27 +127,24 @@ public static class InventorProps
             if ((File.GetAttributes(path) & FileAttributes.ReadOnly) != 0)
                 throw new IOException(Loc.Get("IProps_ReadOnlyFile"));
 
-            dynamic doc = App().Open(path);
+            object doc = Open(path);
             try
             {
+                object sets = Get(doc, "PropertySets")!;
                 foreach (var change in changes)
                 {
-                    dynamic? target = null;
-                    foreach (dynamic set in doc.PropertySets)
-                    {
-                        if ((string)set.Name != change.Set) continue;
-                        foreach (dynamic p in set)
-                            if ((string)p.Name == change.Name) { target = p; break; }
-                        break;
-                    }
+                    object? target = Items(sets)
+                        .Where(set => Get(set, "Name") as string == change.Set)
+                        .SelectMany(Items)
+                        .FirstOrDefault(p => Get(p, "Name") as string == change.Name);
                     if (target is null) throw new InvalidOperationException($"'{change.Name}' not found.");
-                    target.Value = change.Value;
+                    SetValue(target, "Value", change.Value);
                 }
-                doc.PropertySets.FlushToFile();
+                Call(sets, "FlushToFile");
             }
             finally
             {
-                doc.Close(true);
+                Close(doc);
             }
             return true;
         });

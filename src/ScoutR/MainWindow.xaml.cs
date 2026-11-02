@@ -184,7 +184,7 @@ public partial class MainWindow : Window
 
     private void SyncTree()
     {
-        Title = $"{_active.FolderName} - ScoutR {AppInfo.Version}";
+        Title = $"{_active.FolderName} - ScoutR"; // the version is in the status bar
         UpdateCommands();
     }
 
