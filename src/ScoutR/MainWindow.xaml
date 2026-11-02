@@ -103,12 +103,13 @@
 
             <DockPanel Grid.Column="0">
                 <!-- Quick access: fixed links, like Explorer -->
-                <StackPanel DockPanel.Dock="Top" Margin="0,6,0,0">
+                <StackPanel DockPanel.Dock="Top" Margin="0,6,0,0" Background="Transparent"
+                            AllowDrop="True" DragOver="Quick_DragOver" Drop="Quick_Drop">
                     <TextBlock Text="{l:T Quick_Header}" Foreground="{StaticResource MutedBrush}" Margin="10,0,10,4"/>
                     <ItemsControl x:Name="QuickList" Focusable="False">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Click="QuickLink_Click" Tag="{Binding Path}" ToolTip="{Binding Path}"
+                                <Button Click="QuickLink_Click" MouseRightButtonUp="QuickLink_RightClick" Tag="{Binding Path}" ToolTip="{Binding Path}"
                                         Focusable="False" Cursor="Hand">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">

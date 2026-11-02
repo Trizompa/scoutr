@@ -35,7 +35,8 @@ public partial class MainWindow : Window
         ViewA.DataContext = _a;
         ViewB.DataContext = _b;
         Tree.ItemsSource = _tree.Roots;
-        QuickList.ItemsSource = QuickLink.Defaults();
+        _pins = QuickAccess.Load();
+        RefreshQuick();
 
         foreach (var pane in new[] { _a, _b })
         {
@@ -175,6 +176,72 @@ public partial class MainWindow : Window
 
     private void ShowInTree_Click(object sender, RoutedEventArgs e) => _tree.Reveal(_active.CurrentPath);
 
+    // ---- Quick access (pinned folders) ----
+
+    private List<string> _pins = new();
+
+    private void RefreshQuick() =>
+        QuickList.ItemsSource = _pins.Where(Directory.Exists).Select(QuickLink.For).ToList();
+
+    private bool IsPinned(string path) => _pins.Contains(path.TrimEnd('\\'), StringComparer.OrdinalIgnoreCase) ||
+                                          _pins.Contains(path, StringComparer.OrdinalIgnoreCase);
+
+    private void Pin(string path)
+    {
+        if (IsPinned(path) || !Directory.Exists(path)) return;
+        _pins.Add(path);
+        QuickAccess.Save(_pins);
+        RefreshQuick();
+    }
+
+    private void Unpin(string path)
+    {
+        _pins.RemoveAll(p => string.Equals(p.TrimEnd('\\'), path.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase));
+        QuickAccess.Save(_pins);
+        RefreshQuick();
+    }
+
+    private void MovePin(string path, int delta)
+    {
+        int i = _pins.FindIndex(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        int j = i + delta;
+        if (i < 0 || j < 0 || j >= _pins.Count) return;
+        (_pins[i], _pins[j]) = (_pins[j], _pins[i]);
+        QuickAccess.Save(_pins);
+        RefreshQuick();
+    }
+
+    /// <summary>Right-click on a pinned folder: open, move up/down, unpin.</summary>
+    private void QuickLink_RightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is not Button { Tag: string path } button) return;
+        int i = _pins.FindIndex(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        var menu = new ContextMenu { PlacementTarget = button };
+        menu.Items.Add(MenuEntry("Ctx_Open", null, true, () => { _active.Navigate(path); ActiveView.FocusList(); }));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(MenuEntry("Ctx_MoveUp", null, i > 0, () => MovePin(path, -1)));
+        menu.Items.Add(MenuEntry("Ctx_MoveDown", null, i >= 0 && i < _pins.Count - 1, () => MovePin(path, +1)));
+        menu.Items.Add(new Separator());
+        menu.Items.Add(MenuEntry("Ctx_Unpin", null, true, () => Unpin(path)));
+        menu.IsOpen = true;
+        e.Handled = true;
+    }
+
+    /// <summary>Folders dropped on Quick access get pinned.</summary>
+    private void Quick_DragOver(object sender, DragEventArgs e)
+    {
+        bool folders = e.Data.GetData(DataFormats.FileDrop) is string[] p && p.Any(Directory.Exists);
+        e.Effects = folders ? DragDropEffects.Link : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void Quick_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+            foreach (string p in paths.Where(Directory.Exists)) Pin(p);
+        e.Handled = true;
+    }
+
     private void QuickLink_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: string path }) _active.Navigate(path);
@@ -285,6 +352,12 @@ public partial class MainWindow : Window
             menu.Items.Add(MenuEntry("Btn_Delete", "Del", n > 0, () => _ = DeleteAsync()));
             menu.Items.Add(MenuEntry("Btn_Rename", "F2", n == 1, Rename));
             menu.Items.Add(new Separator());
+            if (sel.Count == 1 && first.IsDirectory)
+            {
+                bool pinned = IsPinned(first.FullPath);
+                menu.Items.Add(MenuEntry(pinned ? "Ctx_Unpin" : "Ctx_Pin", null, true,
+                    () => { if (pinned) Unpin(first.FullPath); else Pin(first.FullPath); }));
+            }
             menu.Items.Add(MenuEntry("Ctx_Properties", "Alt+Enter", sel.Count == 1,
                 () => ShellVerb(first.FullPath, "properties")));
         }

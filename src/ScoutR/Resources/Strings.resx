@@ -83,4 +83,8 @@
   <data name="Quick_Header" xml:space="preserve"><value>Quick access</value></data>
   <data name="Btn_ShowInTree" xml:space="preserve"><value>Show folder</value></data>
   <data name="Tip_ShowInTree" xml:space="preserve"><value>Expand the tree to the folder of the active pane</value></data>
+  <data name="Ctx_Pin" xml:space="preserve"><value>Pin to Quick access</value></data>
+  <data name="Ctx_Unpin" xml:space="preserve"><value>Unpin from Quick access</value></data>
+  <data name="Ctx_MoveUp" xml:space="preserve"><value>Move up</value></data>
+  <data name="Ctx_MoveDown" xml:space="preserve"><value>Move down</value></data>
 </root>
