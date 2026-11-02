@@ -35,8 +35,7 @@ public partial class MainWindow : Window
         ViewA.DataContext = _a;
         ViewB.DataContext = _b;
         Tree.ItemsSource = _tree.Roots;
-        _pins = QuickAccess.Load();
-        RefreshQuick();
+        RefreshPins();
 
         foreach (var pane in new[] { _a, _b })
         {
@@ -178,73 +177,58 @@ public partial class MainWindow : Window
 
     // ---- Quick access (pinned folders) ----
 
-    private List<string> _pins = new();
+    private readonly PinList _quick = new(PinList.Quick);
+    private readonly PinList _work = new(PinList.Work);
 
-    private void RefreshQuick() =>
-        QuickList.ItemsSource = _pins.Where(Directory.Exists).Select(QuickLink.For).ToList();
+    private PinList ListFor(string group) => group == PinList.Work ? _work : _quick;
 
-    private bool IsPinned(string path) => _pins.Contains(path.TrimEnd('\\'), StringComparer.OrdinalIgnoreCase) ||
-                                          _pins.Contains(path, StringComparer.OrdinalIgnoreCase);
-
-    private void Pin(string path)
+    private void RefreshPins()
     {
-        if (IsPinned(path) || !Directory.Exists(path)) return;
-        _pins.Add(path);
-        QuickAccess.Save(_pins);
-        RefreshQuick();
+        QuickList.ItemsSource = _quick.Links();
+        var work = _work.Links();
+        WorkList.ItemsSource = work;
+        WorkEmpty.Visibility = work.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void Unpin(string path)
-    {
-        _pins.RemoveAll(p => string.Equals(p.TrimEnd('\\'), path.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase));
-        QuickAccess.Save(_pins);
-        RefreshQuick();
-    }
-
-    private void MovePin(string path, int delta)
-    {
-        int i = _pins.FindIndex(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
-        int j = i + delta;
-        if (i < 0 || j < 0 || j >= _pins.Count) return;
-        (_pins[i], _pins[j]) = (_pins[j], _pins[i]);
-        QuickAccess.Save(_pins);
-        RefreshQuick();
-    }
+    private void Pin(string group, string path) { ListFor(group).Add(path); RefreshPins(); }
+    private void Unpin(string group, string path) { ListFor(group).Remove(path); RefreshPins(); }
+    private void MovePin(string group, string path, int delta) { ListFor(group).Move(path, delta); RefreshPins(); }
 
     /// <summary>Right-click on a pinned folder: open, move up/down, unpin.</summary>
     private void QuickLink_RightClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Button { Tag: string path } button) return;
-        int i = _pins.FindIndex(p => string.Equals(p, path, StringComparison.OrdinalIgnoreCase));
+        if (sender is not Button { Tag: QuickLink link } button) return;
+        var list = ListFor(link.Group);
         var menu = new ContextMenu { PlacementTarget = button };
-        menu.Items.Add(MenuEntry("Ctx_Open", null, true, () => { _active.Navigate(path); ActiveView.FocusList(); }));
+        menu.Items.Add(MenuEntry("Ctx_Open", null, true, () => { _active.Navigate(link.Path); ActiveView.FocusList(); }));
         menu.Items.Add(new Separator());
-        menu.Items.Add(MenuEntry("Ctx_MoveUp", null, i > 0, () => MovePin(path, -1)));
-        menu.Items.Add(MenuEntry("Ctx_MoveDown", null, i >= 0 && i < _pins.Count - 1, () => MovePin(path, +1)));
+        menu.Items.Add(MenuEntry("Ctx_MoveUp", null, list.CanMove(link.Path, -1), () => MovePin(link.Group, link.Path, -1)));
+        menu.Items.Add(MenuEntry("Ctx_MoveDown", null, list.CanMove(link.Path, +1), () => MovePin(link.Group, link.Path, +1)));
         menu.Items.Add(new Separator());
-        menu.Items.Add(MenuEntry("Ctx_Unpin", null, true, () => Unpin(path)));
+        menu.Items.Add(MenuEntry(link.Group == PinList.Work ? "Ctx_UnpinWork" : "Ctx_Unpin", null, true,
+            () => Unpin(link.Group, link.Path)));
         menu.IsOpen = true;
         e.Handled = true;
     }
 
-    /// <summary>Folders dropped on Quick access get pinned.</summary>
-    private void Quick_DragOver(object sender, DragEventArgs e)
+    /// <summary>Folders dropped on Quick access / Working folders get pinned there (the panel's Tag says which).</summary>
+    private void Pins_DragOver(object sender, DragEventArgs e)
     {
         bool folders = e.Data.GetData(DataFormats.FileDrop) is string[] p && p.Any(Directory.Exists);
         e.Effects = folders ? DragDropEffects.Link : DragDropEffects.None;
         e.Handled = true;
     }
 
-    private void Quick_Drop(object sender, DragEventArgs e)
+    private void Pins_Drop(object sender, DragEventArgs e)
     {
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
-            foreach (string p in paths.Where(Directory.Exists)) Pin(p);
+        if (sender is FrameworkElement { Tag: string group } && e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+            foreach (string p in paths.Where(Directory.Exists)) Pin(group, p);
         e.Handled = true;
     }
 
     private void QuickLink_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: string path }) _active.Navigate(path);
+        if (sender is Button { Tag: QuickLink link }) _active.Navigate(link.Path);
         ActiveView.FocusList();
     }
 
@@ -354,9 +338,12 @@ public partial class MainWindow : Window
             menu.Items.Add(new Separator());
             if (sel.Count == 1 && first.IsDirectory)
             {
-                bool pinned = IsPinned(first.FullPath);
-                menu.Items.Add(MenuEntry(pinned ? "Ctx_Unpin" : "Ctx_Pin", null, true,
-                    () => { if (pinned) Unpin(first.FullPath); else Pin(first.FullPath); }));
+                string f = first.FullPath;
+                bool inQuick = _quick.Contains(f), inWork = _work.Contains(f);
+                menu.Items.Add(MenuEntry(inQuick ? "Ctx_Unpin" : "Ctx_Pin", null, true,
+                    () => { if (inQuick) Unpin(PinList.Quick, f); else Pin(PinList.Quick, f); }));
+                menu.Items.Add(MenuEntry(inWork ? "Ctx_UnpinWork" : "Ctx_PinWork", null, true,
+                    () => { if (inWork) Unpin(PinList.Work, f); else Pin(PinList.Work, f); }));
             }
             menu.Items.Add(MenuEntry("Ctx_Properties", "Alt+Enter", sel.Count == 1,
                 () => ShellVerb(first.FullPath, "properties")));
