@@ -100,6 +100,21 @@ public sealed class FsItem
         };
     }
 
+    /// <summary>
+    /// Drives to show, like Explorer: empty card readers / DVD drives with no disc are hidden,
+    /// mapped network drives are always shown.
+    /// </summary>
+    public static IEnumerable<DriveInfo> VisibleDrives()
+    {
+        foreach (var d in DriveInfo.GetDrives())
+        {
+            bool show;
+            try { show = d.DriveType == DriveType.Network || d.IsReady; }
+            catch { show = false; }
+            if (show) yield return d;
+        }
+    }
+
     public static FsItem FromDrive(DriveInfo d)
     {
         string label = d.Name.TrimEnd('\\');
@@ -113,6 +128,8 @@ public sealed class FsItem
             }
         }
         catch { }
+        // Explorer's own name wins (network shares show their share name, not the server's volume label).
+        if (ShellInfo.DisplayName(d.Name) is { } shown) label = shown;
 
         return new FsItem
         {

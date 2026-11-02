@@ -204,7 +204,7 @@ public sealed class PaneViewModel : ObservableObject
 
         if (path.Length == 0)
         {
-            foreach (var drive in DriveInfo.GetDrives())
+            foreach (var drive in FsItem.VisibleDrives())
             {
                 var item = FsItem.FromDrive(drive);
                 if (filter.Length == 0 || item.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))

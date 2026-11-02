@@ -137,7 +137,7 @@ public sealed class TreeNodeVm : ObservableObject
 
     /// <summary>Windows' own folder / drive icon (open folder when expanded).</summary>
     public System.Windows.Media.ImageSource? Icon =>
-        IsDrive ? ShellIcons.ForDrive(Path) : IsExpanded ? ShellIcons.FolderOpen : ShellIcons.Folder;
+        IsDrive ? ShellInfo.DriveIcon(Path) : IsExpanded ? ShellIcons.FolderOpen : ShellIcons.Folder;
 
     public bool ShowShellIcon => IsFolderShape && ShellIcons.Available;
     public bool ShowDrawnIcon => IsFolderShape && !ShellIcons.Available;
@@ -180,7 +180,7 @@ public sealed class TreeNodeVm : ObservableObject
         {
             if (IsRoot)
             {
-                foreach (var drive in DriveInfo.GetDrives())
+                foreach (var drive in FsItem.VisibleDrives())
                 {
                     var item = FsItem.FromDrive(drive);
                     Children.Add(new TreeNodeVm(_model, item.Name, drive.Name));

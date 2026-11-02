@@ -95,10 +95,31 @@ public static class ShellInfo
         }
     }
 
+    /// <summary>Drive icon as Explorer shows it (Windows logo on the system disk, network icon...).</summary>
+    public static BitmapSource? DriveIcon(string root) =>
+        IconCache.GetOrAdd("drive:" + root, r => LoadIcon(root, 0, 0)) ?? ShellIcons.ForDrive(root);
+
+    private const uint ShgfiDisplayName = 0x200;
+
+    /// <summary>Drive name as Explorer shows it, e.g. "Design (G:)" for a mapped network share.</summary>
+    public static string? DisplayName(string path)
+    {
+        try
+        {
+            var info = new ShFileInfo();
+            SHGetFileInfo(path, 0, ref info, (uint)Marshal.SizeOf<ShFileInfo>(), ShgfiDisplayName);
+            return string.IsNullOrWhiteSpace(info.szDisplayName) ? null : info.szDisplayName;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>The icon Explorer shows for this item (16 px), or null to use the drawn one.</summary>
     public static BitmapSource? Icon(FsItem item)
     {
-        if (item.IsDrive) return ShellIcons.ForDrive(item.FullPath);
+        if (item.IsDrive) return DriveIcon(item.FullPath);
         if (item.IsDirectory) return ShellIcons.Folder;
 
         string ext = Path.GetExtension(item.Name);
