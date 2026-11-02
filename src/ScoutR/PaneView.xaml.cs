@@ -9,6 +9,9 @@ public partial class PaneView : UserControl
     public PaneView()
     {
         InitializeComponent();
+        // Remember which column sorts what before the user can reorder them.
+        if (ItemList.View is GridView g)
+            for (int i = 0; i < g.Columns.Count && i < 4; i++) _columnKeys[g.Columns[i]] = (PaneViewModel.SortKey)i;
         PreviewMouseDown += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
         GotKeyboardFocus += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
     }
@@ -109,6 +112,7 @@ public partial class PaneView : UserControl
     // ---- Sorting ----
 
     private readonly Dictionary<GridViewColumn, string> _headerText = new();
+    private readonly Dictionary<GridViewColumn, PaneViewModel.SortKey> _columnKeys = new();
 
     private void Header_Click(object sender, RoutedEventArgs e)
     {
@@ -118,8 +122,11 @@ public partial class PaneView : UserControl
         foreach (var c in grid.Columns)
             if (!_headerText.ContainsKey(c)) _headerText[c] = c.Header?.ToString() ?? "";
 
-        int index = grid.Columns.IndexOf(column);
-        var key = (PaneViewModel.SortKey)Math.Clamp(index, 0, 3); // Name, Date modified, Type, Size
+        // Columns can be dragged into another order, so each one keeps the sort key it was created with.
+        if (_columnKeys.Count == 0)
+            for (int i = 0; i < grid.Columns.Count && i < 4; i++)
+                _columnKeys[grid.Columns[i]] = (PaneViewModel.SortKey)i; // Name, Date modified, Type, Size
+        if (!_columnKeys.TryGetValue(column, out var key)) return;
         Vm.SetSort(key);
 
         // Small arrow on the sorted column, like Explorer.
