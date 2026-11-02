@@ -42,11 +42,22 @@ public static class InventorProps
         if (_app is null)
         {
             // The class id is the same in every Inventor version; the ProgIDs vary, so they are only a fallback.
-            var type = Type.GetTypeFromCLSID(ApprenticeClsid, throwOnError: false)
-                       ?? Type.GetTypeFromProgID(ProgId)
-                       ?? Type.GetTypeFromProgID("Inventor.ApprenticeServer")
-                       ?? throw new InvalidOperationException(Loc.Get("IProps_NoApprentice"));
-            _app = Activator.CreateInstance(type)!;
+            var types = new[]
+            {
+                Type.GetTypeFromCLSID(ApprenticeClsid, throwOnError: false),
+                Type.GetTypeFromProgID(ProgId),
+                Type.GetTypeFromProgID("Inventor.ApprenticeServer"),
+            };
+            Exception? last = null;
+            foreach (var type in types)
+            {
+                if (type is null) continue;
+                try { _app = Activator.CreateInstance(type)!; break; }
+                catch (Exception ex) { last = ex; } // e.g. "class not registered": try the next one
+            }
+            if (_app is null)
+                throw new InvalidOperationException(Loc.Get("IProps_NoApprentice") +
+                                                    (last is null ? "" : $" ({last.Message})"));
         }
         return _app;
     }
