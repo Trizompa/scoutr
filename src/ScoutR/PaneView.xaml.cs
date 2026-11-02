@@ -227,7 +227,7 @@ public partial class PaneView : UserControl
         if (paths.Length == 0) return;
 
         var data = new DataObject(DataFormats.FileDrop, paths);
-        DragDrop.DoDragDrop(ItemList, data, DragDropEffects.Copy | DragDropEffects.Move);
+        DragDrop.DoDragDrop(ItemList, data, DragDropEffects.Copy | DragDropEffects.Move | DragDropEffects.Link);
         DragFinished?.Invoke(this, EventArgs.Empty);
     }
 

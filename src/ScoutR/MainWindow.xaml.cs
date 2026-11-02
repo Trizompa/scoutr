@@ -233,7 +233,10 @@ public partial class MainWindow : Window
     private void Pins_DragOver(object sender, DragEventArgs e)
     {
         bool folders = e.Data.GetData(DataFormats.FileDrop) is string[] p && p.Any(Directory.Exists);
-        e.Effects = folders ? DragDropEffects.Link : DragDropEffects.None;
+        // Pinning only adds a link; nothing is copied. Use whichever effect the source allows.
+        e.Effects = !folders ? DragDropEffects.None
+            : (e.AllowedEffects & DragDropEffects.Link) != 0 ? DragDropEffects.Link
+            : DragDropEffects.Copy;
         e.Handled = true;
     }
 
