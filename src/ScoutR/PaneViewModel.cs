@@ -267,7 +267,7 @@ public sealed class PaneViewModel : ObservableObject
         {
             try
             {
-                if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) continue;
+                if ((info.Attributes & FileAttributes.Hidden) != 0) continue; // like Explorer: System alone is still shown (customised folders)
             }
             catch
             {

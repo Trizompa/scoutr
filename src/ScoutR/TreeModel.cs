@@ -177,7 +177,7 @@ public sealed class TreeNodeVm : ObservableObject
             else
             {
                 var dirs = new DirectoryInfo(Path).EnumerateDirectories()
-                    .Where(d => (d.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
+                    .Where(d => (d.Attributes & FileAttributes.Hidden) == 0)
                     .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase);
                 foreach (var d in dirs)
                     Children.Add(new TreeNodeVm(_model, d.Name, d.FullName) { CustomIcon = ShellInfo.HasCustomIcon(d) });
