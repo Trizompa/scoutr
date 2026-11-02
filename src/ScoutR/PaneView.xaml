@@ -131,7 +131,7 @@
             </Grid>
         </Grid>
 
-        <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended"
+        <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended" Foreground="Black"
                   ItemsSource="{Binding Items}" ItemContainerStyle="{StaticResource RowStyle}"
                   Tag="{Binding IsActive}" SelectionChanged="ItemList_SelectionChanged"
                   KeyDown="ItemList_KeyDown" VirtualizingPanel.IsVirtualizing="True"
