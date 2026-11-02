@@ -20,8 +20,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         if (AppIcon.Load() is { } icon) Icon = icon; // Explorer icon, recoloured green
 
-        // After an update the app restarts with --maximized if it was maximized before.
-        if (Environment.GetCommandLineArgs().Contains("--maximized")) WindowState = WindowState.Maximized;
+        // Always start maximized (also after an update restart).
+        WindowState = WindowState.Maximized;
 
         string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
