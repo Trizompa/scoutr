@@ -122,15 +122,15 @@
                 <Rectangle Grid.Column="3" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
                 <Rectangle Grid.Column="5" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
                 <Rectangle Grid.Column="7" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
-                <StackPanel x:Name="SummaryCol" Grid.Column="2" Width="300">
+                <StackPanel x:Name="SummaryCol" Grid.Column="2" Width="465">
                     <TextBlock Text="{l:T IProps_Summary}" Style="{StaticResource SectionTitle}"/>
-                    <ItemsControl x:Name="SummaryItems" Margin="0,0,26,0" ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
+                    <ItemsControl x:Name="SummaryItems" ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="4" Width="300">
+                <StackPanel Grid.Column="4" Width="465">
                     <TextBlock Text="{l:T IProps_Project}" Style="{StaticResource SectionTitle}"/>
-                    <ItemsControl x:Name="ProjectItems" Margin="0,0,26,0" ItemsSource="{Binding Project}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
+                    <ItemsControl x:Name="ProjectItems" ItemsSource="{Binding Project}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="6" Width="300">
+                <StackPanel Grid.Column="6" Width="491">
                     <DockPanel Margin="0,0,0,4">
                         <Button DockPanel.Dock="Right" Style="{StaticResource LinkBtn}" Click="AddCustom_Click"
                                 ToolTip="{l:T IProps_AddTip}">
