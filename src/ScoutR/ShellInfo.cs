@@ -95,6 +95,29 @@ public static class ShellInfo
         }
     }
 
+    /// <summary>The folder's own icon (special icons for Desktop, Downloads, Documents...).</summary>
+    public static BitmapSource? FolderIcon(string path) =>
+        IconCache.GetOrAdd("folder:" + path, p => LoadIcon(p, 0, 0)) ?? ShellIcons.Folder;
+
+    [DllImport("shell32.dll")]
+    private static extern int SHGetKnownFolderPath(ref Guid id, uint flags, IntPtr token, out IntPtr path);
+
+    /// <summary>The real Downloads folder (it can be moved or redirected, so it is asked to Windows).</summary>
+    public static string DownloadsPath()
+    {
+        try
+        {
+            var id = new Guid("374DE290-123F-4565-9164-39C4925E467B");
+            if (SHGetKnownFolderPath(ref id, 0, IntPtr.Zero, out IntPtr p) == 0)
+            {
+                try { return Marshal.PtrToStringUni(p) ?? ""; }
+                finally { Marshal.FreeCoTaskMem(p); }
+            }
+        }
+        catch { }
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+    }
+
     /// <summary>Drive icon as Explorer shows it (Windows logo on the system disk, network icon...).</summary>
     public static BitmapSource? DriveIcon(string root) =>
         IconCache.GetOrAdd("drive:" + root, r => LoadIcon(root, 0, 0)) ?? ShellIcons.ForDrive(root);

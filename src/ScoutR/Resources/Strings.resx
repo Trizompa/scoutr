@@ -80,4 +80,5 @@
   <data name="Prompt_NewFileTitle" xml:space="preserve"><value>New text document</value></data>
   <data name="Prompt_NewFileLabel" xml:space="preserve"><value>File name (in {0}):</value></data>
   <data name="NewFileDefault" xml:space="preserve"><value>New Text Document.txt</value></data>
+  <data name="Quick_Header" xml:space="preserve"><value>Quick access</value></data>
 </root>

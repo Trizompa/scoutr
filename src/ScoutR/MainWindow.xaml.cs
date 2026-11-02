@@ -35,6 +35,7 @@ public partial class MainWindow : Window
         ViewA.DataContext = _a;
         ViewB.DataContext = _b;
         Tree.ItemsSource = _tree.Roots;
+        QuickList.ItemsSource = QuickLink.Defaults();
 
         foreach (var pane in new[] { _a, _b })
         {
@@ -171,6 +172,12 @@ public partial class MainWindow : Window
     {
         if (sender is TreeViewItem item) item.BringIntoView();
         e.Handled = true;
+    }
+
+    private void QuickLink_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: string path }) _active.Navigate(path);
+        ActiveView.FocusList();
     }
 
     private void Status(string text) => StatusText.Text = text;

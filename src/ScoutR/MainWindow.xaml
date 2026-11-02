@@ -102,6 +102,36 @@
             </Grid.ColumnDefinitions>
 
             <DockPanel Grid.Column="0">
+                <!-- Quick access: fixed links, like Explorer -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,6,0,0">
+                    <TextBlock Text="{l:T Quick_Header}" Foreground="{StaticResource MutedBrush}" Margin="10,0,10,4"/>
+                    <ItemsControl x:Name="QuickList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Click="QuickLink_Click" Tag="{Binding Path}" ToolTip="{Binding Path}"
+                                        Focusable="False" Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="Bd" Background="Transparent" Padding="14,3">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0"
+                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Border Height="1" Background="{StaticResource LineBrush}" Margin="10,6,10,0"/>
+                </StackPanel>
                 <Grid DockPanel.Dock="Top" Margin="10,6,10,4">
                     <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}"/>
                 </Grid>
