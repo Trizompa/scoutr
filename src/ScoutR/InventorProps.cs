@@ -161,6 +161,15 @@ public static class InventorProps
         });
 
     /// <summary>Text shown in the panel for a value.</summary>
+    public static string Format(object? value, string? name = null)
+    {
+        // Inventor stores the Mass iProperty in grams: shown in kg, as in Inventor.
+        if (string.Equals(name, "Mass", StringComparison.OrdinalIgnoreCase) && value is double or float or int)
+            return (Convert.ToDouble(value, CultureInfo.CurrentCulture) / 1000)
+                .ToString("#,##0.###", CultureInfo.CurrentCulture) + " kg";
+        return Format(value);
+    }
+
     public static string Format(object? value) => value switch
     {
         null => "",

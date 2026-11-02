@@ -14,7 +14,7 @@ public sealed class IPropRow : ObservableObject
     {
         Source = source;
         IsNew = isNew;
-        Original = InventorProps.Format(source.Value);
+        Original = InventorProps.Format(source.Value, source.Name);
         _value = Original;
     }
 
@@ -145,11 +145,25 @@ public partial class IPropsPanel : UserControl
             bool readOnly = (File.GetAttributes(path) & FileAttributes.ReadOnly) != 0;
             InfoText.Text = readOnly ? Loc.Get("IProps_ReadOnlyFile") : "";
             Body.Visibility = Visibility.Visible;
+            _ = Dispatcher.InvokeAsync(FitThumbnail, System.Windows.Threading.DispatcherPriority.Loaded);
         }
         catch (Exception ex)
         {
             if (token == _token) InfoText.Text = Loc.Get("Msg_Error", ex.Message);
         }
+    }
+
+    /// <summary>Thumbnail top level with the first field and as tall as about 6 fields.</summary>
+    private void FitThumbnail()
+    {
+        var list = SummaryItems.Items.Count > 0 ? SummaryItems : ProjectItems;
+        if (list.Items.Count == 0 ||
+            list.ItemContainerGenerator.ContainerFromIndex(0) is not FrameworkElement row ||
+            row.ActualHeight <= 0) return;
+        double top = row.TranslatePoint(new Point(0, 0), Body).Y + 2; // the row's own top margin
+        double size = Math.Round(6 * row.ActualHeight - 4);
+        ThumbBox.Margin = new Thickness(0, Math.Max(0, top), 20, 0);
+        ThumbBox.Width = ThumbBox.Height = size;
     }
 
     private void FillAll()
