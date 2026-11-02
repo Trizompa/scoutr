@@ -14,6 +14,7 @@ public sealed record IPropValue(string Set, string Name, string Label, object? V
 public static class InventorProps
 {
     private const string ProgId = "Inventor.ApprenticeServerComponent";
+    private static readonly Guid ApprenticeClsid = new("C343ED84-A129-11D3-B799-0060B0F159EF");
 
     public const string SummarySet = "Inventor Summary Information";
     public const string DocSummarySet = "Inventor Document Summary Information";
@@ -40,7 +41,10 @@ public static class InventorProps
     {
         if (_app is null)
         {
-            var type = Type.GetTypeFromProgID(ProgId)
+            // The class id is the same in every Inventor version; the ProgIDs vary, so they are only a fallback.
+            var type = Type.GetTypeFromCLSID(ApprenticeClsid, throwOnError: false)
+                       ?? Type.GetTypeFromProgID(ProgId)
+                       ?? Type.GetTypeFromProgID("Inventor.ApprenticeServer")
                        ?? throw new InvalidOperationException(Loc.Get("IProps_NoApprentice"));
             _app = Activator.CreateInstance(type)!;
         }
