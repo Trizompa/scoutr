@@ -164,16 +164,17 @@
                 <Grid DockPanel.Dock="Top" Margin="10,6,10,4">
                     <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
                     <!-- Expand the tree to the active pane's folder (the tree does not follow the panes on its own) -->
-                    <Button HorizontalAlignment="Right" Click="ShowInTree_Click" ToolTip="{l:T Tip_ShowInTree}"
+                    <Button x:Name="ShowInTreeBtn" HorizontalAlignment="Right" Click="ShowInTree_Click"
+                            ToolTip="{l:T Tip_ShowInTree}" Content="{l:T Btn_ShowInTree}" Tag="&#xE8A7;"
                             Focusable="False" Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Padding="6,1">
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="&#xE8A7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                        <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                    FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"
                                                    Foreground="{StaticResource AccentBrush}"/>
-                                        <TextBlock Text="{l:T Btn_ShowInTree}" Foreground="{StaticResource AccentBrush}"
+                                        <TextBlock Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}" Foreground="{StaticResource AccentBrush}"
                                                    VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>

@@ -201,7 +201,21 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private void ShowInTree_Click(object sender, RoutedEventArgs e) => _tree.Reveal(_active.CurrentPath);
+    /// <summary>"Show folder" expands the tree to the active folder; pressed again ("Collapse") it undoes that.</summary>
+    private void ShowInTree_Click(object sender, RoutedEventArgs e)
+    {
+        if (_tree.IsRevealed) _tree.Unreveal();
+        else _tree.Reveal(_active.CurrentPath);
+        UpdateShowInTree();
+    }
+
+    private void UpdateShowInTree()
+    {
+        bool open = _tree.IsRevealed;
+        ShowInTreeBtn.Content = Loc.Get(open ? "Btn_CollapseTree" : "Btn_ShowInTree");
+        ShowInTreeBtn.Tag = open ? "\uE70E" : "\uE8A7"; // chevron up / open folder
+        ShowInTreeBtn.ToolTip = Loc.Get(open ? "Tip_CollapseTree" : "Tip_ShowInTree");
+    }
 
     // ---- Quick access (pinned folders) ----
 

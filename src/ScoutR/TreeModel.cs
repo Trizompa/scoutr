@@ -40,8 +40,11 @@ public sealed class TreeModel
         Suppress = true;
         try
         {
+            _revealed.Clear();
+            _prevSelected = FindSelected(Root);
             if (path.Length == 0) { ClearSelection(Root); Root.IsSelected = true; }
             else WalkCore(path, select: true);
+            IsRevealed = true;
         }
         finally
         {
@@ -49,10 +52,52 @@ public sealed class TreeModel
         }
     }
 
+    // What "Show folder" opened, so "Collapse" can put the tree back as it was.
+    private readonly List<TreeNodeVm> _revealed = new();
+    private TreeNodeVm? _prevSelected;
+
+    /// <summary>True after "Show folder", until "Collapse" undoes it.</summary>
+    public bool IsRevealed { get; private set; }
+
+    /// <summary>"Collapse": closes the branches "Show folder" opened and restores the previous selection.</summary>
+    public void Unreveal()
+    {
+        Suppress = true;
+        try
+        {
+            for (int i = _revealed.Count - 1; i >= 0; i--) _revealed[i].IsExpanded = false;
+            ClearSelection(Root);
+            if (_prevSelected is not null) _prevSelected.IsSelected = true;
+            _revealed.Clear();
+            _prevSelected = null;
+            IsRevealed = false;
+        }
+        finally
+        {
+            Suppress = false;
+        }
+    }
+
+    private static TreeNodeVm? FindSelected(TreeNodeVm node)
+    {
+        if (node.IsSelected) return node;
+        if (!node.IsExpanded) return null;
+        foreach (var child in node.Children)
+            if (!child.IsDummy && FindSelected(child) is { } found) return found;
+        return null;
+    }
+
+    private void Expand(TreeNodeVm node)
+    {
+        if (node.IsExpanded) return;
+        _revealed.Add(node);
+        node.IsExpanded = true;
+    }
+
     private void WalkCore(string path, bool select)
     {
         var node = Root;
-        node.IsExpanded = true;
+        Expand(node);
 
         foreach (string segment in Chain(path))
         {
@@ -61,7 +106,7 @@ public sealed class TreeModel
                 !c.IsDummy && string.Equals(c.Path, segment, StringComparison.OrdinalIgnoreCase));
             if (child is null) break;
             node = child;
-            node.IsExpanded = true;
+            Expand(node);
         }
 
         if (select) node.IsSelected = true;

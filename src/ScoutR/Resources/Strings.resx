@@ -115,4 +115,6 @@
   <data name="IProps_AddLabel" xml:space="preserve"><value>Property name:</value></data>
   <data name="IProps_Exists" xml:space="preserve"><value>'{0}' already exists.</value></data>
   <data name="IProps_Delete" xml:space="preserve"><value>Delete this custom iProperty (on Save)</value></data>
+  <data name="Btn_CollapseTree" xml:space="preserve"><value>Collapse</value></data>
+  <data name="Tip_CollapseTree" xml:space="preserve"><value>Put the tree back as it was before Show folder</value></data>
 </root>
