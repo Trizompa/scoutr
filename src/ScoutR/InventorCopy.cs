@@ -88,8 +88,6 @@ public static partial class InventorProps
                     }
                 }
 
-                bool props = renamePartNumber.Contains(to) && RenamePartNumber(doc, find, replace);
-
                 if (refs)
                 {
                     object save = Get(App(), "FileSaveAs")!;
@@ -97,10 +95,20 @@ public static partial class InventorProps
                     Call(save, "ExecuteSave");
                     relinked++;
                 }
-                else if (props)
-                {
-                    Call(Get(doc, "PropertySets")!, "FlushToFile");
-                }
+            }
+            finally
+            {
+                Close(doc);
+            }
+        }
+        // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
+        foreach (string to in map.Values.Where(p => IsInventorFile(p) && renamePartNumber.Contains(p)))
+        {
+            progress.Report(Path.GetFileName(to));
+            object doc = Open(to);
+            try
+            {
+                if (RenamePartNumber(doc, find, replace)) Call(Get(doc, "PropertySets")!, "FlushToFile");
             }
             finally
             {
