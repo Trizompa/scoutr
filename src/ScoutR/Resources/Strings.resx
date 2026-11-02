@@ -87,8 +87,8 @@
   <data name="Ctx_Unpin" xml:space="preserve"><value>Unpin from Quick access</value></data>
   <data name="Ctx_MoveUp" xml:space="preserve"><value>Move up</value></data>
   <data name="Ctx_MoveDown" xml:space="preserve"><value>Move down</value></data>
-  <data name="Work_Header" xml:space="preserve"><value>Working folders</value></data>
-  <data name="Work_Empty" xml:space="preserve"><value>Drop folders here, or right-click a folder › Pin to Working folders</value></data>
-  <data name="Ctx_PinWork" xml:space="preserve"><value>Pin to Working folders</value></data>
-  <data name="Ctx_UnpinWork" xml:space="preserve"><value>Unpin from Working folders</value></data>
+  <data name="Work_Header" xml:space="preserve"><value>My Worklist</value></data>
+  <data name="Work_Empty" xml:space="preserve"><value>Drop folders here, or right-click a folder › Pin to My Worklist</value></data>
+  <data name="Ctx_PinWork" xml:space="preserve"><value>Pin to My Worklist</value></data>
+  <data name="Ctx_UnpinWork" xml:space="preserve"><value>Unpin from My Worklist</value></data>
 </root>
