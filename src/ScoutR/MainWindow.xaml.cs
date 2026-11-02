@@ -60,7 +60,7 @@ public partial class MainWindow : Window
             _settings.HiddenIProps = PropsPanel.Hidden.ToList();
             _settings.Save();
         };
-        PropsPanel.Saved += (_, _) => { _a.Reload(); _b.Reload(); };
+        PropsPanel.Saved += (_, _) => ReloadKeepingSelection();
         ViewA.Activated += (_, _) => SetActive(_a);
         ViewB.Activated += (_, _) => SetActive(_b);
 
@@ -351,9 +351,30 @@ public partial class MainWindow : Window
     }
 
     /// <summary>The panel follows the single selected file of the active pane.</summary>
+    private bool _holdProps;
+
+    /// <summary>Refreshes both panes (new dates/sizes) without losing the selection or the iProperties panel.</summary>
+    private void ReloadKeepingSelection()
+    {
+        _holdProps = true;
+        try
+        {
+            foreach (var (vm, view) in new[] { (_a, ViewA), (_b, ViewB) })
+            {
+                var sel = view.SelectedItems.Select(i => i.FullPath.TrimEnd('\\', '/')).ToList();
+                vm.Reload();
+                view.SelectPaths(sel);
+            }
+        }
+        finally
+        {
+            _holdProps = false;
+        }
+    }
+
     private void UpdateProps()
     {
-        if (PropsPanel.Visibility != Visibility.Visible) return;
+        if (_holdProps || PropsPanel.Visibility != Visibility.Visible) return;
         var sel = ActiveView.SelectedItems;
         string? path = sel.Count == 1 && !sel[0].IsDirectory ? sel[0].FullPath : null;
         _ = PropsPanel.ShowFileAsync(path);
