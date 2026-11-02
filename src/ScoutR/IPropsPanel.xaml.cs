@@ -156,6 +156,9 @@ public partial class IPropsPanel : UserControl
     /// <summary>Thumbnail top level with the first field and as tall as about 6 fields.</summary>
     private void FitThumbnail()
     {
+        // Custom is as wide as the other groups plus its delete buttons, even when it is empty.
+        CustomCol.MinWidth = Math.Max(SummaryCol.ActualWidth, ProjectCol.ActualWidth) + 26;
+
         var list = SummaryItems.Items.Count > 0 ? SummaryItems : ProjectItems;
         if (list.Items.Count == 0 ||
             list.ItemContainerGenerator.ContainerFromIndex(0) is not FrameworkElement row ||
@@ -175,6 +178,7 @@ public partial class IPropsPanel : UserControl
             InventorProps.ProjectNames);
         Fill(Custom, _props.Where(p => p.Set == InventorProps.CustomSet).OrderBy(p => p.Label), null);
         UpdateNoCustom();
+        _ = Dispatcher.InvokeAsync(FitThumbnail, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
     private void UpdateNoCustom() =>

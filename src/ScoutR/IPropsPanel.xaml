@@ -7,8 +7,9 @@
         <DataTemplate x:Key="PropRow">
             <Grid Margin="0,2">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="115"/>
-                    <ColumnDefinition Width="*"/>
+                    <!-- As wide as the longest visible label, the same in all three groups -->
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="IPropLabel"/>
+                    <ColumnDefinition Width="350"/>
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding Label}" ToolTip="{Binding Label}" Foreground="{StaticResource MutedBrush}"
                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,6,0"/>
@@ -98,7 +99,7 @@
             </DockPanel>
         </Border>
         <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
-            <Grid x:Name="Body" Margin="12,8,12,8" Visibility="Collapsed">
+            <Grid x:Name="Body" Margin="12,8,12,8" Visibility="Collapsed" Grid.IsSharedSizeScope="True">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="24"/>
@@ -122,15 +123,15 @@
                 <Rectangle Grid.Column="3" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
                 <Rectangle Grid.Column="5" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
                 <Rectangle Grid.Column="7" Width="1" HorizontalAlignment="Center" Fill="{StaticResource LineBrush}"/>
-                <StackPanel x:Name="SummaryCol" Grid.Column="2" Width="465">
+                <StackPanel x:Name="SummaryCol" Grid.Column="2">
                     <TextBlock Text="{l:T IProps_Summary}" Style="{StaticResource SectionTitle}"/>
                     <ItemsControl x:Name="SummaryItems" ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="4" Width="465">
+                <StackPanel x:Name="ProjectCol" Grid.Column="4">
                     <TextBlock Text="{l:T IProps_Project}" Style="{StaticResource SectionTitle}"/>
                     <ItemsControl x:Name="ProjectItems" ItemsSource="{Binding Project}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="6" Width="491">
+                <StackPanel x:Name="CustomCol" Grid.Column="6">
                     <DockPanel Margin="0,0,0,4">
                         <Button DockPanel.Dock="Right" Style="{StaticResource LinkBtn}" Click="AddCustom_Click"
                                 ToolTip="{l:T IProps_AddTip}">
