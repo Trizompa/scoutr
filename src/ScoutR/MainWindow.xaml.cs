@@ -263,9 +263,39 @@ public partial class MainWindow : Window
         return list.Paths.Count;
     }
 
+    private Border? _dropLine;
+
+    private void HideDropLine()
+    {
+        if (_dropLine is not null) _dropLine.Visibility = Visibility.Collapsed;
+        _dropLine = null;
+    }
+
+    /// <summary>Shows the line above or below the link under the mouse, where the drop will land.</summary>
+    private void ShowDropLine(DragEventArgs e)
+    {
+        var hit = e.OriginalSource as DependencyObject;
+        while (hit is not null && hit is not Button)
+            hit = hit is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(hit) : null;
+
+        Border? line = null;
+        if (hit is Button b)
+        {
+            bool below = e.GetPosition(b).Y > b.ActualHeight / 2;
+            line = b.Template.FindName(below ? "LineBottom" : "LineTop", b) as Border;
+        }
+        if (line == _dropLine) return;
+        HideDropLine();
+        _dropLine = line;
+        if (line is not null) line.Visibility = Visibility.Visible;
+    }
+
+    private void Pins_DragLeave(object sender, DragEventArgs e) => HideDropLine();
+
     /// <summary>Folders dropped on Quick access / My Worklist get pinned; links dragged inside get reordered.</summary>
     private void Pins_DragOver(object sender, DragEventArgs e)
     {
+        ShowDropLine(e);
         if (e.Data.GetDataPresent(PinFormat)) e.Effects = DragDropEffects.Move;
         else
         {
@@ -280,6 +310,7 @@ public partial class MainWindow : Window
 
     private void Pins_Drop(object sender, DragEventArgs e)
     {
+        HideDropLine();
         if (sender is not FrameworkElement { Tag: string group }) return;
         var list = ListFor(group);
         int index = DropIndex(e, list);

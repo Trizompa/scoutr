@@ -109,13 +109,22 @@
                                         Focusable="False" Cursor="Hand">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
-                                            <Border x:Name="Bd" Background="Transparent" Padding="14,3">
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0"
-                                                           RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
+                                            <Grid>
+                                                <Border x:Name="Bd" Background="Transparent" Padding="14,3">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0"
+                                                               RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <!-- Drop position lines, shown while dragging a link (like Explorer) -->
+                                                <Border x:Name="LineTop" Height="2" VerticalAlignment="Top" Margin="10,-1,10,0"
+                                                        Background="{StaticResource AccentBrush}" Visibility="Collapsed"
+                                                        IsHitTestVisible="False"/>
+                                                <Border x:Name="LineBottom" Height="2" VerticalAlignment="Bottom" Margin="10,0,10,-1"
+                                                        Background="{StaticResource AccentBrush}" Visibility="Collapsed"
+                                                        IsHitTestVisible="False"/>
+                                            </Grid>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
@@ -128,7 +137,7 @@
                 </DockPanel.Resources>
                 <!-- Working folders: the user's own work folders, kept apart from the system ones above -->
                 <StackPanel DockPanel.Dock="Bottom" Background="Transparent" Tag="work"
-                            AllowDrop="True" DragOver="Pins_DragOver" Drop="Pins_Drop">
+                            AllowDrop="True" DragOver="Pins_DragOver" Drop="Pins_Drop" DragLeave="Pins_DragLeave">
                     <Border Height="1" Background="{StaticResource LineBrush}" Margin="10,0,10,6"/>
                     <TextBlock Text="{l:T Work_Header}" Foreground="{StaticResource MutedBrush}" Margin="10,0,10,4"/>
                     <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" Focusable="False">
@@ -140,7 +149,7 @@
                 </StackPanel>
                 <!-- Quick access: fixed links, like Explorer -->
                 <StackPanel DockPanel.Dock="Top" Margin="0,6,0,0" Background="Transparent"
-                            AllowDrop="True" DragOver="Pins_DragOver" Drop="Pins_Drop" Tag="quick">
+                            AllowDrop="True" DragOver="Pins_DragOver" Drop="Pins_Drop" DragLeave="Pins_DragLeave" Tag="quick">
                     <TextBlock Text="{l:T Quick_Header}" Foreground="{StaticResource MutedBrush}" Margin="10,0,10,4"/>
                     <ItemsControl x:Name="QuickList" Focusable="False" ItemTemplate="{StaticResource PinTemplate}"/>
                     <Border Height="1" Background="{StaticResource LineBrush}" Margin="10,6,10,0"/>
