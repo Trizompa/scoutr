@@ -1,0 +1,76 @@
+<Window x:Class="ScoutR.CopyDesignWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:ScoutR"
+        Title="{l:T Copy_Title}" Width="900" Height="600" MinWidth="600" MinHeight="350"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="White">
+    <DockPanel Margin="14">
+        <!-- Find / replace rule for the new names (folders included) -->
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="220"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{l:T Copy_Find}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBox x:Name="FindBox" Grid.Column="1" Padding="3,2" TextChanged="Rule_Changed"/>
+            <TextBlock Grid.Column="2" Text="{l:T Copy_Replace}" VerticalAlignment="Center" Margin="16,0,8,0"/>
+            <TextBox x:Name="ReplaceBox" Grid.Column="3" Padding="3,2" TextChanged="Rule_Changed"/>
+            <CheckBox x:Name="PartNumbers" Grid.Column="4" Content="{l:T Copy_PartNumbers}" IsChecked="True"
+                      VerticalAlignment="Center" Margin="16,0,0,0"/>
+        </Grid>
+        <TextBlock DockPanel.Dock="Top" x:Name="RootText" Foreground="{StaticResource MutedBrush}"
+                   Margin="0,0,0,6" TextTrimming="CharacterEllipsis"/>
+
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Right" Content="{l:T Dlg_Cancel}" Width="90" IsCancel="True" x:Name="CancelBtn"/>
+            <Button DockPanel.Dock="Right" Content="{l:T Copy_Go}" Width="90" Margin="0,0,8,0" IsDefault="True"
+                    x:Name="CopyBtn" Click="Copy_Click" IsEnabled="False"/>
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+
+        <ListView x:Name="FileList" BorderBrush="{StaticResource LineBrush}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="{l:T Copy_ColCopy}" Width="55">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding Copy}" IsEnabled="{Binding CanCopy}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="{l:T Copy_ColFile}" Width="360">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding OldName}" ToolTip="{Binding Path}"
+                                           Margin="{Binding Indent}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="{l:T Copy_ColNew}" Width="360">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding NewName}" ToolTip="{Binding NewPath}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Copy}" Value="False">
+                                                    <Setter Property="Foreground" Value="#909090"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding HasProblem}" Value="True">
+                                                    <Setter Property="Foreground" Value="#C42B1C"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</Window>

@@ -510,6 +510,9 @@ public partial class MainWindow : Window
             menu.Items.Add(new Separator());
             if (sel.Count == 1 && !first.IsDirectory && InventorProps.IsInventorFile(first.FullPath))
                 menu.Items.Add(MenuEntry("Ctx_IProps", "Alt+P", true, () => ShowProps(true)));
+            if (sel.Count == 1 && !first.IsDirectory &&
+                Path.GetExtension(first.FullPath).Equals(".iam", StringComparison.OrdinalIgnoreCase))
+                menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
             if (sel.Count == 1 && first.IsDirectory)
             {
                 string f = first.FullPath;
@@ -581,6 +584,17 @@ public partial class MainWindow : Window
         .ToList();
 
     /// <summary>Runs file work off the UI thread. The work returns (items done, first error or null).</summary>
+    /// <summary>Copy design (Inventor assembly + the files it uses, re-linked); selects the new assembly.</summary>
+    private void CopyDesign(string top)
+    {
+        var dlg = new CopyDesignWindow(this, top);
+        if (dlg.ShowDialog() != true || dlg.Result is not { } result) return;
+        _a.Reload();
+        _b.Reload();
+        ActiveView.SelectPaths(new[] { result });
+        Status(Loc.Get("Copy_Done"));
+    }
+
     private async Task RunAsync(Func<(int Done, string? Error)> work, string doneKey)
     {
         if (_busy) return;

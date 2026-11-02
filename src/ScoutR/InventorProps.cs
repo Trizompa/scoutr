@@ -17,7 +17,7 @@ public sealed record IPropValue(string Set, string Name, string Label, object? V
 /// Reads and writes Inventor iProperties through Inventor Apprentice, the free component installed with
 /// Inventor (no Inventor window needed). All calls run on one STA thread, the only kind COM accepts.
 /// </summary>
-public static class InventorProps
+public static partial class InventorProps
 {
     private const string ProgId = "Inventor.ApprenticeServerComponent";
     private static readonly Guid ApprenticeClsid = new("C343ED84-A129-11D3-B799-0060B0F159EF");
