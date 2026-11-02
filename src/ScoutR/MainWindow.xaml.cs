@@ -50,8 +50,10 @@ public partial class MainWindow : Window
             pane.Error += (_, msg) => Status(Loc.Get("Msg_Error", msg));
         }
 
-        ViewA.SelectedItemsChanged += (_, _) => UpdateCommands();
-        ViewB.SelectedItemsChanged += (_, _) => UpdateCommands();
+        ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
+        ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
+        PropsPanel.CloseRequested += (_, _) => ShowProps(false);
+        PropsPanel.Saved += (_, _) => { _a.Reload(); _b.Reload(); };
         ViewA.Activated += (_, _) => SetActive(_a);
         ViewB.Activated += (_, _) => SetActive(_b);
 
@@ -170,6 +172,7 @@ public partial class MainWindow : Window
         _a.IsActive = pane == _a;
         _b.IsActive = pane == _b;
         SyncTree();
+        UpdateProps();
     }
 
     /// <summary>After a dialog: the pane the command started in stays the active one and gets the focus back.</summary>
@@ -324,6 +327,30 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
+    // ---- iProperties panel ----
+
+    private double _propsHeight = 230;
+
+    private void IProps_Click(object sender, RoutedEventArgs e) => ShowProps(PropsPanel.Visibility != Visibility.Visible);
+
+    private void ShowProps(bool show)
+    {
+        if (!show && PropsRow.ActualHeight > 60) _propsHeight = PropsRow.ActualHeight;
+        PropsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        PropsSplitter.Visibility = PropsPanel.Visibility;
+        PropsRow.Height = show ? new GridLength(_propsHeight) : new GridLength(0);
+        if (show) UpdateProps();
+    }
+
+    /// <summary>The panel follows the single selected file of the active pane.</summary>
+    private void UpdateProps()
+    {
+        if (PropsPanel.Visibility != Visibility.Visible) return;
+        var sel = ActiveView.SelectedItems;
+        string? path = sel.Count == 1 && !sel[0].IsDirectory ? sel[0].FullPath : null;
+        _ = PropsPanel.ShowFileAsync(path);
+    }
+
     private void QuickLink_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: QuickLink link }) _active.Navigate(link.Path);
@@ -372,6 +399,10 @@ public partial class MainWindow : Window
             case Key.C when ctrl && !inText: PutOnClipboard(cut: false); e.Handled = true; break;
             case Key.X when ctrl && !inText: PutOnClipboard(cut: true); e.Handled = true; break;
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
+            case Key.System when e.SystemKey == Key.P:
+                ShowProps(PropsPanel.Visibility != Visibility.Visible);
+                e.Handled = true;
+                break;
             case Key.System when e.SystemKey == Key.Enter && !inText:
                 var sel = ActiveView.SelectedItems;
                 string target = sel.Count == 1 ? sel[0].FullPath : _active.CurrentPath;
@@ -434,6 +465,8 @@ public partial class MainWindow : Window
             menu.Items.Add(MenuEntry("Btn_Delete", "Del", n > 0, () => _ = DeleteAsync()));
             menu.Items.Add(MenuEntry("Btn_Rename", "F2", n == 1, Rename));
             menu.Items.Add(new Separator());
+            if (sel.Count == 1 && !first.IsDirectory && InventorProps.IsInventorFile(first.FullPath))
+                menu.Items.Add(MenuEntry("Ctx_IProps", "Alt+P", true, () => ShowProps(true)));
             if (sel.Count == 1 && first.IsDirectory)
             {
                 string f = first.FullPath;

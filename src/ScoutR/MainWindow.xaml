@@ -84,6 +84,8 @@
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
+                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE946;" Content="iProperties"
+                                        ToolTip="{l:T Tip_IProps}" Click="IProps_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -100,8 +102,13 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*" MinWidth="200"/>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" MinHeight="150"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition x:Name="PropsRow" Height="0"/>
+            </Grid.RowDefinitions>
 
-            <DockPanel Grid.Column="0">
+            <DockPanel Grid.Column="0" Grid.RowSpan="3">
                 <DockPanel.Resources>
                     <DataTemplate x:Key="PinTemplate">
                                 <Button Click="QuickLink_Click" MouseRightButtonUp="QuickLink_RightClick" Tag="{Binding}"
@@ -214,10 +221,16 @@
                 </TreeView>
             </DockPanel>
 
-            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
+            <GridSplitter Grid.Column="1" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
             <l:PaneView x:Name="ViewA" Grid.Column="2"/>
             <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
             <l:PaneView x:Name="ViewB" Grid.Column="4"/>
+
+            <!-- iProperties panel (Inventor files), shown on request under the two panes -->
+            <GridSplitter x:Name="PropsSplitter" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Height="4"
+                          HorizontalAlignment="Stretch" ResizeDirection="Rows" Background="{StaticResource LineBrush}"
+                          Visibility="Collapsed"/>
+            <l:IPropsPanel x:Name="PropsPanel" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Visibility="Collapsed"/>
         </Grid>
 
         <!-- Status bar + update notice -->

@@ -91,4 +91,20 @@
   <data name="Work_Empty" xml:space="preserve"><value>Drop folders here, or right-click a folder › Pin to My Worklist</value></data>
   <data name="Ctx_PinWork" xml:space="preserve"><value>Pin to My Worklist</value></data>
   <data name="Ctx_UnpinWork" xml:space="preserve"><value>Unpin from My Worklist</value></data>
+  <data name="Tip_IProps" xml:space="preserve"><value>Show the iProperties of the selected Inventor file (Alt+P)</value></data>
+  <data name="Ctx_IProps" xml:space="preserve"><value>iProperties</value></data>
+  <data name="IProps_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="IProps_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="IProps_Revert" xml:space="preserve"><value>Revert</value></data>
+  <data name="IProps_Summary" xml:space="preserve"><value>Summary</value></data>
+  <data name="IProps_Project" xml:space="preserve"><value>Project</value></data>
+  <data name="IProps_Custom" xml:space="preserve"><value>Custom</value></data>
+  <data name="IProps_NoCustom" xml:space="preserve"><value>No custom properties</value></data>
+  <data name="IProps_SelectFile" xml:space="preserve"><value>Select an Inventor file (.ipt, .iam, .idw, .ipn) to see its iProperties.</value></data>
+  <data name="IProps_Loading" xml:space="preserve"><value>Reading...</value></data>
+  <data name="IProps_Saving" xml:space="preserve"><value>Saving...</value></data>
+  <data name="IProps_Saved" xml:space="preserve"><value>Saved.</value></data>
+  <data name="IProps_ReadOnlyFile" xml:space="preserve"><value>The file is read-only (checked in to Vault?): check it out to edit.</value></data>
+  <data name="IProps_NoApprentice" xml:space="preserve"><value>Inventor Apprentice not found: it is installed with Autodesk Inventor.</value></data>
+  <data name="IProps_SaveChanges" xml:space="preserve"><value>Save the iProperties changes to {0}?</value></data>
 </root>
