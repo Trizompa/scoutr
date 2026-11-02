@@ -74,7 +74,9 @@
   <data name="Ctx_Open" xml:space="preserve"><value>Open</value></data>
   <data name="Ctx_OpenWith" xml:space="preserve"><value>Open with...</value></data>
   <data name="Ctx_Properties" xml:space="preserve"><value>Properties</value></data>
-  <data name="Ctx_NewTextFile" xml:space="preserve"><value>New text document</value></data>
+  <data name="Ctx_NewTextFile" xml:space="preserve"><value>Text Document</value></data>
+  <data name="Ctx_New" xml:space="preserve"><value>New</value></data>
+  <data name="Ctx_NewFolder" xml:space="preserve"><value>Folder</value></data>
   <data name="Prompt_NewFileTitle" xml:space="preserve"><value>New text document</value></data>
   <data name="Prompt_NewFileLabel" xml:space="preserve"><value>File name (in {0}):</value></data>
   <data name="NewFileDefault" xml:space="preserve"><value>New Text Document.txt</value></data>

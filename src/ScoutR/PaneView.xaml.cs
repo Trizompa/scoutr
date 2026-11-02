@@ -83,11 +83,132 @@ public partial class PaneView : UserControl
     /// <summary>Left click on empty space clears the selection, like Explorer.</summary>
     private void ItemList_LeftDown(object sender, MouseButtonEventArgs e)
     {
+        _dragStart = null;
+        _pressedOnSelected = null;
         if (Keyboard.Modifiers == ModifierKeys.None && IsOnEmptySpace(e))
         {
             ItemList.SelectedItems.Clear();
             ItemList.Focus();
+            return;
         }
+
+        var row = RowAt(e.OriginalSource);
+        if (row is null || e.ClickCount > 1) return;
+        _dragStart = e.GetPosition(ItemList);
+
+        // Pressing on an already selected row keeps the whole selection, so several items can be dragged.
+        // A plain click (no drag) then selects just that row, on mouse up.
+        if (row.IsSelected && Keyboard.Modifiers == ModifierKeys.None && ItemList.SelectedItems.Count > 1)
+        {
+            _pressedOnSelected = row;
+            row.Focus();
+            e.Handled = true;
+        }
+    }
+
+    // ---- Drag & drop ----
+
+    private Point? _dragStart;
+    private ListViewItem? _pressedOnSelected;
+
+    /// <summary>Files dropped on this pane from inside ScoutR or from Explorer: (paths, target folder, move).</summary>
+    public event Action<PaneView, string[], string, bool>? FilesDropped;
+
+    /// <summary>Raised after a drag that started here ends (the files may have moved).</summary>
+    public event EventHandler? DragFinished;
+
+    private ListViewItem? RowAt(object source)
+    {
+        var hit = source as DependencyObject;
+        while (hit is not null && hit != ItemList)
+        {
+            if (hit is ListViewItem lvi) return lvi;
+            hit = hit is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(hit)
+                : LogicalTreeHelper.GetParent(hit);
+        }
+        return null;
+    }
+
+    private void ItemList_LeftUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_pressedOnSelected is { } row)
+        {
+            ItemList.SelectedItems.Clear();
+            row.IsSelected = true;
+        }
+        _pressedOnSelected = null;
+        _dragStart = null;
+    }
+
+    private void ItemList_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_dragStart is not { } start || e.LeftButton != MouseButtonState.Pressed) return;
+        var d = e.GetPosition(ItemList) - start;
+        if (Math.Abs(d.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(d.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
+        _dragStart = null;
+        _pressedOnSelected = null;
+        var paths = SelectedItems.Where(i => !i.IsDrive).Select(i => i.FullPath).ToArray();
+        if (paths.Length == 0) return;
+
+        var data = new DataObject(DataFormats.FileDrop, paths);
+        DragDrop.DoDragDrop(ItemList, data, DragDropEffects.Copy | DragDropEffects.Move);
+        DragFinished?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Folder the drop goes to: the folder row under the mouse, else this pane's folder.</summary>
+    private string? DropTarget(DragEventArgs e, string[] sources)
+    {
+        if (RowAt(e.OriginalSource) is { DataContext: FsItem { IsDirectory: true } item } &&
+            !sources.Contains(item.FullPath, StringComparer.OrdinalIgnoreCase))
+            return item.FullPath;
+        string here = Vm?.CurrentPath ?? "";
+        return here.Length == 0 ? null : here;
+    }
+
+    /// <summary>Explorer rules: Ctrl = copy, Shift = move, otherwise move on the same drive and copy across drives.</summary>
+    private static DragDropEffects Effect(DragEventArgs e, string[] sources, string target)
+    {
+        string root = System.IO.Path.GetPathRoot(target) ?? "";
+        bool sameDrive = sources.All(p =>
+            string.Equals(System.IO.Path.GetPathRoot(p), root, StringComparison.OrdinalIgnoreCase));
+
+        // Dropping items back into the folder they are already in does nothing (unless Ctrl asks for a copy).
+        bool sameFolder = sources.All(p => string.Equals(System.IO.Path.GetDirectoryName(p.TrimEnd('\\')),
+            target.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase));
+
+        DragDropEffects want =
+            (e.KeyStates & DragDropKeyStates.ControlKey) != 0 ? DragDropEffects.Copy :
+            (e.KeyStates & DragDropKeyStates.ShiftKey) != 0 ? DragDropEffects.Move :
+            sameDrive ? DragDropEffects.Move : DragDropEffects.Copy;
+        if (sameFolder && want == DragDropEffects.Move) return DragDropEffects.None;
+        return (e.AllowedEffects & want) != 0 ? want : e.AllowedEffects & (DragDropEffects.Copy | DragDropEffects.Move);
+    }
+
+    private static string[]? Sources(DragEventArgs e) =>
+        e.Data.GetDataPresent(DataFormats.FileDrop) ? e.Data.GetData(DataFormats.FileDrop) as string[] : null;
+
+    private void ItemList_DragOver(object sender, DragEventArgs e)
+    {
+        var sources = Sources(e);
+        var target = sources is null ? null : DropTarget(e, sources);
+        e.Effects = sources is null || target is null ? DragDropEffects.None : Effect(e, sources, target);
+        e.Handled = true;
+    }
+
+    private void ItemList_Drop(object sender, DragEventArgs e)
+    {
+        var sources = Sources(e);
+        var target = sources is null ? null : DropTarget(e, sources);
+        if (sources is null || target is null) return;
+
+        var effect = Effect(e, sources, target);
+        e.Effects = effect;
+        e.Handled = true;
+        if (effect == DragDropEffects.None) return;
+        Activated?.Invoke(this, EventArgs.Empty);
+        FilesDropped?.Invoke(this, sources, target, effect == DragDropEffects.Move);
     }
 
     /// <summary>True when the click is not on a row, a column header or a scrollbar.</summary>

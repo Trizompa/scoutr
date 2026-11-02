@@ -49,6 +49,9 @@ public partial class MainWindow : Window
 
         foreach (var view in new[] { ViewA, ViewB })
         {
+            view.FilesDropped += (_, paths, dest, move) =>
+                _ = RunAsync(() => TransferAll(paths, dest, move), move ? "Msg_Moved" : "Msg_Copied");
+            view.DragFinished += (_, _) => { _a.Reload(); _b.Reload(); };
             var menu = new ContextMenu();
             view.ItemList.ContextMenu = menu;
             view.ItemList.ContextMenuOpening += (_, _) => BuildMenu(menu);
@@ -282,8 +285,10 @@ public partial class MainWindow : Window
             menu.Items.Add(MenuEntry("Btn_Refresh", null, true, () => _active.Reload()));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Btn_Paste", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
-            menu.Items.Add(MenuEntry("Btn_NewFolder", "F7", inFolder, NewFolder));
-            menu.Items.Add(MenuEntry("Ctx_NewTextFile", null, inFolder, NewTextFile));
+            var newMenu = new MenuItem { Header = Loc.Get("Ctx_New"), IsEnabled = inFolder };
+            newMenu.Items.Add(MenuEntry("Ctx_NewFolder", "F7", true, NewFolder));
+            newMenu.Items.Add(MenuEntry("Ctx_NewTextFile", null, true, NewTextFile));
+            menu.Items.Add(newMenu);
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Ctx_Properties", null, inFolder,
                 () => ShellVerb(_active.CurrentPath, "properties")));
