@@ -339,6 +339,7 @@ public partial class MainWindow : Window
         PropsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         PropsSplitter.Visibility = PropsPanel.Visibility;
         PropsRow.Height = show ? new GridLength(_propsHeight) : new GridLength(0);
+        BtnIProps.IsChecked = show; // ribbon button stays "on" while the panel is open
         if (show) UpdateProps();
     }
 

@@ -84,8 +84,8 @@
                                        Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,3"/>
                             <StackPanel Orientation="Horizontal">
                                 <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
-                                <Button Style="{StaticResource ToolBtn}" Tag="&#xE946;" Content="iProperties"
-                                        ToolTip="{l:T Tip_IProps}" Click="IProps_Click"/>
+                                <ToggleButton x:Name="BtnIProps" Style="{StaticResource ToolToggle}" Tag="&#xE946;"
+                                              Content="iProperties" ToolTip="{l:T Tip_IProps}" Click="IProps_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
