@@ -94,7 +94,7 @@
         <!-- Tree | Pane A | Pane B -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="320" MinWidth="120"/>
+                <ColumnDefinition x:Name="TreeColumn" Width="320" MinWidth="120"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*" MinWidth="200"/>
                 <ColumnDefinition Width="Auto"/>

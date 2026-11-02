@@ -129,9 +129,55 @@ public partial class PaneView : UserControl
         if (!_columnKeys.TryGetValue(column, out var key)) return;
         Vm.SetSort(key);
 
-        // Small arrow on the sorted column, like Explorer.
+        UpdateSortArrow();
+    }
+
+    /// <summary>Small arrow on the sorted column, like Explorer.</summary>
+    private void UpdateSortArrow()
+    {
+        if (ItemList.View is not GridView grid || Vm is null) return;
         foreach (var c in grid.Columns)
-            c.Header = c == column ? _headerText[c] + (Vm.SortDescending ? "  \u2193" : "  \u2191") : _headerText[c];
+        {
+            if (!_headerText.ContainsKey(c)) _headerText[c] = c.Header?.ToString() ?? "";
+            bool sorted = _columnKeys.TryGetValue(c, out var k) && k == Vm.SortBy;
+            c.Header = sorted ? _headerText[c] + (Vm.SortDescending ? "  \u2193" : "  \u2191") : _headerText[c];
+        }
+    }
+
+    /// <summary>Current column order, widths and sort, for saving.</summary>
+    public void SaveLayout(PaneSettings into)
+    {
+        into.Folder = Vm?.CurrentPath;
+        into.SortBy = (int)(Vm?.SortBy ?? 0);
+        into.SortDescending = Vm?.SortDescending ?? false;
+        into.Columns.Clear();
+        if (ItemList.View is GridView grid)
+            foreach (var c in grid.Columns)
+                if (_columnKeys.TryGetValue(c, out var k))
+                    into.Columns.Add(new ColumnSetting { Key = (int)k, Width = c.ActualWidth });
+    }
+
+    /// <summary>Restores column order, widths and sort saved by <see cref="SaveLayout"/>.</summary>
+    public void ApplyLayout(PaneSettings from)
+    {
+        if (ItemList.View is GridView grid)
+        {
+            int pos = 0;
+            foreach (var saved in from.Columns)
+            {
+                var column = _columnKeys.FirstOrDefault(kv => (int)kv.Value == saved.Key).Key;
+                if (column is null) continue;
+                int at = grid.Columns.IndexOf(column);
+                if (at >= 0 && pos < grid.Columns.Count)
+                {
+                    if (at != pos) grid.Columns.Move(at, pos);
+                    pos++;
+                }
+                if (saved.Width > 10) column.Width = saved.Width;
+            }
+        }
+        Vm?.ApplySort((PaneViewModel.SortKey)Math.Clamp(from.SortBy, 0, 3), from.SortDescending);
+        if (from.SortBy != 0 || from.SortDescending) UpdateSortArrow();
     }
 
     // ---- Drag & drop ----

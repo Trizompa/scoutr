@@ -15,9 +15,13 @@ public partial class MainWindow : Window
     private bool _busy;
     private (List<string> Paths, bool Cut)? _clipboard;
 
+    private readonly AppSettings _settings = AppSettings.Load();
+
     public MainWindow()
     {
         InitializeComponent();
+        if (_settings.TreeWidth > 60) TreeColumn.Width = new GridLength(_settings.TreeWidth);
+        Closing += (_, _) => SaveSettings();
         if (AppIcon.Load() is { } icon) Icon = icon; // Explorer icon, recoloured green
 
         // Always start maximized (also after an update restart).
@@ -27,8 +31,11 @@ public partial class MainWindow : Window
         string docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         string downloads = Path.Combine(profile, "Downloads");
 
-        _a = new PaneViewModel(docs);
-        _b = new PaneViewModel(Directory.Exists(downloads) ? downloads : profile);
+        // Last folders from the previous run, when they still exist.
+        static string Pick(string? saved, string fallback) =>
+            !string.IsNullOrEmpty(saved) && Directory.Exists(saved) ? saved : fallback;
+        _a = new PaneViewModel(Pick(_settings.A.Folder, docs));
+        _b = new PaneViewModel(Pick(_settings.B.Folder, Directory.Exists(downloads) ? downloads : profile));
         _active = _a;
         _a.IsActive = true;
 
@@ -66,8 +73,18 @@ public partial class MainWindow : Window
     private PaneView ActiveView => _active == _a ? ViewA : ViewB;
     private PaneView OtherView => _active == _a ? ViewB : ViewA;
 
+    private void SaveSettings()
+    {
+        ViewA.SaveLayout(_settings.A);
+        ViewB.SaveLayout(_settings.B);
+        _settings.TreeWidth = TreeColumn.ActualWidth;
+        _settings.Save();
+    }
+
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        ViewA.ApplyLayout(_settings.A);
+        ViewB.ApplyLayout(_settings.B);
         SyncTree();
         Status(Loc.Get("Msg_Ready"));
         UpdateCommands();
@@ -134,6 +151,7 @@ public partial class MainWindow : Window
         Status(Loc.Get("Update_Downloading"));
         try
         {
+            SaveSettings(); // the update restart skips the normal close
             await _updater.ApplyAsync(WindowState == WindowState.Maximized); // restarts the app on success
         }
         catch (Exception ex)

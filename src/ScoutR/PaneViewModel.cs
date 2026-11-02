@@ -206,6 +206,14 @@ public sealed class PaneViewModel : ObservableObject
     public bool SortDescending { get; private set; }
 
     /// <summary>Click on a column: sort by it, or flip the order if it is already the sort column.</summary>
+    /// <summary>Restores a saved sort without the click toggling.</summary>
+    public void ApplySort(SortKey key, bool descending)
+    {
+        SortBy = key;
+        SortDescending = descending;
+        Items = Sort(Items);
+    }
+
     public void SetSort(SortKey key)
     {
         if (SortBy == key) SortDescending = !SortDescending;
