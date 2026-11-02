@@ -106,6 +106,9 @@ public sealed class PaneViewModel : ObservableObject
 
     public bool CanGoBack => _back.Count > 0;
 
+    /// <summary>After moving up to a parent folder: the child folder we came from (selected, like Explorer).</summary>
+    public string? CameFrom { get; private set; }
+
     public static string Normalize(string path)
     {
         path = path.Trim().Trim('"');
@@ -133,6 +136,21 @@ public sealed class PaneViewModel : ObservableObject
 
         if (record && !string.Equals(path, CurrentPath, StringComparison.OrdinalIgnoreCase))
             _back.Push(CurrentPath);
+
+        // Going up to a parent (Up, breadcrumb, Back): remember the child we came from, to select it.
+        CameFrom = null;
+        string old = CurrentPath;
+        string prefix = path.Length == 0 ? "" : path.TrimEnd('\\') + "\\";
+        if (old.Length > path.Length && old.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string rest = old.Substring(prefix.Length);
+            int cut = rest.IndexOf('\\');
+            CameFrom = prefix + (cut < 0 ? rest : rest.Substring(0, cut));
+        }
+        else if (path.Length == 0 && old.Length > 0)
+        {
+            CameFrom = Path.GetPathRoot(old); // back to This PC: select the drive
+        }
 
         CurrentPath = path;
         _filter = "";

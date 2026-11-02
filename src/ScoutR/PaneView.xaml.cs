@@ -13,6 +13,11 @@ public partial class PaneView : UserControl
         if (ItemList.View is GridView g)
             for (int i = 0; i < g.Columns.Count && i < 4; i++) _columnKeys[g.Columns[i]] = (PaneViewModel.SortKey)i;
         PreviewMouseDown += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
+        DataContextChanged += (_, e) =>
+        {
+            if (e.OldValue is PaneViewModel old) old.Navigated -= OnNavigated;
+            if (e.NewValue is PaneViewModel vm) vm.Navigated += OnNavigated;
+        };
         GotKeyboardFocus += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -51,6 +56,22 @@ public partial class PaneView : UserControl
             first ??= item;
         }
         if (first is not null) ItemList.ScrollIntoView(first);
+    }
+
+    /// <summary>After going up: select the folder we came from and give it the focus, like Explorer.</summary>
+    private void OnNavigated(PaneViewModel vm)
+    {
+        if (vm.CameFrom is not { } from) return;
+        Dispatcher.InvokeAsync(() =>
+        {
+            SelectPaths(new[] { from.TrimEnd('\\') , from });
+            if (ItemList.SelectedItem is { } item)
+            {
+                ItemList.ScrollIntoView(item);
+                ItemList.UpdateLayout();
+                if (ItemList.ItemContainerGenerator.ContainerFromItem(item) is ListViewItem lvi) lvi.Focus();
+            }
+        }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     private void Row_DoubleClick(object sender, MouseButtonEventArgs e)
