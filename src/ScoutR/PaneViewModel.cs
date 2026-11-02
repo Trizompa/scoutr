@@ -20,8 +20,51 @@ public sealed class PaneViewModel : ObservableObject
 
     public PaneViewModel(string startPath)
     {
+        _ui = SynchronizationContext.Current;
+        _debounce = new Timer(_ => _ui?.Post(_ => ExternalChange?.Invoke(this), null));
         if (!Navigate(startPath, false)) Navigate("", false);
     }
+
+    // ---- Live refresh: files created, deleted or renamed outside ScoutR show up on their own ----
+
+    private readonly SynchronizationContext? _ui;
+    private readonly Timer _debounce;
+    private FileSystemWatcher? _watcher;
+
+    /// <summary>Raised (on the UI thread) shortly after the current folder changed on disk.</summary>
+    public event Action<PaneViewModel>? ExternalChange;
+
+    private void Watch(string path)
+    {
+        _watcher?.Dispose();
+        _watcher = null;
+        if (path.Length == 0) return;
+        try
+        {
+            var w = new FileSystemWatcher(path)
+            {
+                IncludeSubdirectories = false,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite |
+                               NotifyFilters.Size | NotifyFilters.Attributes,
+                InternalBufferSize = 64 * 1024,
+            };
+            FileSystemEventHandler changed = (_, _) => Poke();
+            w.Created += changed;
+            w.Deleted += changed;
+            w.Changed += changed;
+            w.Renamed += (_, _) => Poke();
+            w.Error += (_, _) => Poke();
+            w.EnableRaisingEvents = true;
+            _watcher = w;
+        }
+        catch
+        {
+            // Some network shares or special folders can't be watched: Refresh still works.
+        }
+    }
+
+    // Many events come in bursts (a copy, a save): refresh once, 400 ms after the last one.
+    private void Poke() => _debounce.Change(400, Timeout.Infinite);
 
     /// <summary>"" means "This PC" (the drive list).</summary>
     public string CurrentPath
@@ -153,6 +196,7 @@ public sealed class PaneViewModel : ObservableObject
         }
 
         CurrentPath = path;
+        Watch(path);
         _filter = "";
         OnPropertyChanged(nameof(Filter));
         Items = list;

@@ -15,8 +15,8 @@ public partial class PaneView : UserControl
         PreviewMouseDown += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
         DataContextChanged += (_, e) =>
         {
-            if (e.OldValue is PaneViewModel old) old.Navigated -= OnNavigated;
-            if (e.NewValue is PaneViewModel vm) vm.Navigated += OnNavigated;
+            if (e.OldValue is PaneViewModel old) { old.Navigated -= OnNavigated; old.ExternalChange -= OnExternalChange; }
+            if (e.NewValue is PaneViewModel vm) { vm.Navigated += OnNavigated; vm.ExternalChange += OnExternalChange; }
         };
         GotKeyboardFocus += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
     }
@@ -43,7 +43,7 @@ public partial class PaneView : UserControl
     }
 
     /// <summary>Selects the items whose full path is in <paramref name="paths"/>.</summary>
-    public void SelectPaths(IEnumerable<string> paths)
+    public void SelectPaths(IEnumerable<string> paths, bool scroll = true)
     {
         if (Vm is null) return;
         var set = new HashSet<string>(paths, StringComparer.OrdinalIgnoreCase);
@@ -55,7 +55,7 @@ public partial class PaneView : UserControl
             ItemList.SelectedItems.Add(item);
             first ??= item;
         }
-        if (first is not null) ItemList.ScrollIntoView(first);
+        if (scroll && first is not null) ItemList.ScrollIntoView(first);
     }
 
     /// <summary>After going up: select the folder we came from and give it the focus, like Explorer.</summary>
@@ -321,7 +321,47 @@ public partial class PaneView : UserControl
         return true;
     }
 
+    private bool _quietSelection;
+
+    /// <summary>The folder changed on disk: reload it, keeping the selection (and the iProperties panel).</summary>
+    private void OnExternalChange(PaneViewModel vm)
+    {
+        var before = SelectedItems.Select(i => i.FullPath.TrimEnd('\\', '/')).ToList();
+        var sv = FindScroller(ItemList);
+        double offset = sv?.VerticalOffset ?? 0;
+        _quietSelection = true;
+        try
+        {
+            vm.Reload();
+            SelectPaths(before, scroll: false);
+        }
+        finally
+        {
+            _quietSelection = false;
+        }
+        if (sv is not null)
+            _ = Dispatcher.InvokeAsync(() => sv.ScrollToVerticalOffset(offset),
+                System.Windows.Threading.DispatcherPriority.Loaded);
+        var after = SelectedItems.Select(i => i.FullPath.TrimEnd('\\', '/')).ToList();
+        if (!before.SequenceEqual(after, StringComparer.OrdinalIgnoreCase)) RaiseSelection();
+        else SelText.Text = after.Count > 0 ? Loc.Get("Status_Selected", after.Count) : "";
+    }
+
+    private static ScrollViewer? FindScroller(DependencyObject d)
+    {
+        if (d is ScrollViewer sv) return sv;
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(d); i++)
+            if (FindScroller(System.Windows.Media.VisualTreeHelper.GetChild(d, i)) is { } found) return found;
+        return null;
+    }
+
     private void ItemList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_quietSelection) return;
+        RaiseSelection();
+    }
+
+    private void RaiseSelection()
     {
         int n = ItemList.SelectedItems.Count;
         SelText.Text = n > 0 ? Loc.Get("Status_Selected", n) : "";
