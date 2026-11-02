@@ -189,7 +189,7 @@ public partial class PaneView : UserControl
     }
 
     /// <summary>Explorer rules: Ctrl = copy, Shift = move, otherwise move on the same drive and copy across drives.</summary>
-    private static DragDropEffects Effect(DragEventArgs e, string[] sources, string target)
+    private static DragDropEffects DropEffect(DragEventArgs e, string[] sources, string target)
     {
         string root = System.IO.Path.GetPathRoot(target) ?? "";
         bool sameDrive = sources.All(p =>
@@ -214,7 +214,7 @@ public partial class PaneView : UserControl
     {
         var sources = Sources(e);
         var target = sources is null ? null : DropTarget(e, sources);
-        e.Effects = sources is null || target is null ? DragDropEffects.None : Effect(e, sources, target);
+        e.Effects = sources is null || target is null ? DragDropEffects.None : DropEffect(e, sources, target);
         e.Handled = true;
     }
 
@@ -224,7 +224,7 @@ public partial class PaneView : UserControl
         var target = sources is null ? null : DropTarget(e, sources);
         if (sources is null || target is null) return;
 
-        var effect = Effect(e, sources, target);
+        var effect = DropEffect(e, sources, target);
         e.Effects = effect;
         e.Handled = true;
         if (effect == DragDropEffects.None) return;

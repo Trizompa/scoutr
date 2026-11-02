@@ -50,7 +50,7 @@ public partial class MainWindow : Window
 
         foreach (var view in new[] { ViewA, ViewB })
         {
-            view.FilesDropped += (_, paths, dest, move) =>
+            view.FilesDropped += (pane, paths, dest, move) =>
                 _ = RunAsync(() => TransferAll(paths, dest, move), move ? "Msg_Moved" : "Msg_Copied");
             view.DragFinished += (_, _) => { _a.Reload(); _b.Reload(); };
             var menu = new ContextMenu();
