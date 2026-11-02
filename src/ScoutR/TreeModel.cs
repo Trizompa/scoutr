@@ -5,8 +5,8 @@ using System.Windows.Media;
 namespace ScoutR;
 
 /// <summary>
-/// The single folder tree. It shows only the active pane: each pane keeps its own set of
-/// expanded folders, and ShowFor() swaps to the set of the pane that just became active.
+/// The single folder tree, like Explorer's navigation pane: it does not follow the panes by itself;
+/// the "Show folder" button expands it to the active pane's folder.
 /// </summary>
 public sealed class TreeModel
 {
@@ -31,24 +31,17 @@ public sealed class TreeModel
         if (!Suppress) UserNavigated?.Invoke(path);
     }
 
-    private string? _context;
-
     /// <summary>
-    /// Shows the tree for one pane (<paramref name="context"/> is a pane id) and selects <paramref name="path"/>.
-    /// When the pane differs from the last call, the previous pane's open folders are saved and
-    /// replaced with this pane's own, so the two panes never mix.
+    /// "Show folder": expands the tree down to <paramref name="path"/> and selects it, like Explorer's
+    /// "Expand to open folder". Other open branches are left as they are.
     /// </summary>
-    public void ShowFor(string context, string path)
+    public void Reveal(string path)
     {
         Suppress = true;
         try
         {
-            // Only the path to the pane's current folder stays open: everything else is collapsed,
-            // so nothing from the other pane (or from older folders) is left expanded.
-            if (_context != context) ClearSelection(Root);
-            _context = context;
-            CollapseExcept(Root, new HashSet<string>(Chain(path), StringComparer.OrdinalIgnoreCase));
-            WalkCore(path, select: true);
+            if (path.Length == 0) { ClearSelection(Root); Root.IsSelected = true; }
+            else WalkCore(path, select: true);
         }
         finally
         {
@@ -72,16 +65,6 @@ public sealed class TreeModel
         }
 
         if (select) node.IsSelected = true;
-    }
-
-    private static void CollapseExcept(TreeNodeVm node, HashSet<string> keep)
-    {
-        foreach (var child in node.Children)
-        {
-            if (child.IsDummy || !child.IsExpanded) continue;
-            if (!keep.Contains(child.Path)) child.IsExpanded = false;
-            CollapseExcept(child, keep);
-        }
     }
 
     private static void ClearSelection(TreeNodeVm node)

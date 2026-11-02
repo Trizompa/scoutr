@@ -133,7 +133,29 @@
                     <Border Height="1" Background="{StaticResource LineBrush}" Margin="10,6,10,0"/>
                 </StackPanel>
                 <Grid DockPanel.Dock="Top" Margin="10,6,10,4">
-                    <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}"/>
+                    <TextBlock Text="{l:T Tree_Header}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center"/>
+                    <!-- Expand the tree to the active pane's folder (the tree does not follow the panes on its own) -->
+                    <Button HorizontalAlignment="Right" Click="ShowInTree_Click" ToolTip="{l:T Tip_ShowInTree}"
+                            Focusable="False" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Padding="6,1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE8A7;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                   FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource AccentBrush}"/>
+                                        <TextBlock Text="{l:T Btn_ShowInTree}" Foreground="{StaticResource AccentBrush}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
                 </Grid>
                 <!-- No horizontal scrolling: the tree always stays aligned on the left, with the drives. -->
                 <TreeView x:Name="Tree" BorderThickness="0" Padding="0,2"

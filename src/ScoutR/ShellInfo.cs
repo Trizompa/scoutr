@@ -97,7 +97,7 @@ public static class ShellInfo
 
     /// <summary>The folder's own icon (special icons for Desktop, Downloads, Documents...).</summary>
     public static BitmapSource? FolderIcon(string path) =>
-        IconCache.GetOrAdd("folder:" + path, p => LoadIcon(p, 0, 0)) ?? ShellIcons.Folder;
+        IconCache.GetOrAdd("folder:" + path, _ => LoadIcon(path, 0, 0)) ?? ShellIcons.Folder;
 
     [DllImport("shell32.dll")]
     private static extern int SHGetKnownFolderPath(ref Guid id, uint flags, IntPtr token, out IntPtr path);

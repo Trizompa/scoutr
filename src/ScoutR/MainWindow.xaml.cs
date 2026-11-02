@@ -163,7 +163,6 @@ public partial class MainWindow : Window
 
     private void SyncTree()
     {
-        _tree.ShowFor(_active == _a ? "A" : "B", _active.CurrentPath);
         Title = $"{_active.FolderName} - ScoutR {AppInfo.Version}";
         UpdateCommands();
     }
@@ -173,6 +172,8 @@ public partial class MainWindow : Window
         if (sender is TreeViewItem item) item.BringIntoView();
         e.Handled = true;
     }
+
+    private void ShowInTree_Click(object sender, RoutedEventArgs e) => _tree.Reveal(_active.CurrentPath);
 
     private void QuickLink_Click(object sender, RoutedEventArgs e)
     {

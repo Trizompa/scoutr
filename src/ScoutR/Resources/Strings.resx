@@ -81,4 +81,6 @@
   <data name="Prompt_NewFileLabel" xml:space="preserve"><value>File name (in {0}):</value></data>
   <data name="NewFileDefault" xml:space="preserve"><value>New Text Document.txt</value></data>
   <data name="Quick_Header" xml:space="preserve"><value>Quick access</value></data>
+  <data name="Btn_ShowInTree" xml:space="preserve"><value>Show folder</value></data>
+  <data name="Tip_ShowInTree" xml:space="preserve"><value>Expand the tree to the folder of the active pane</value></data>
 </root>
