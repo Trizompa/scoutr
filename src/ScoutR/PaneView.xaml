@@ -138,9 +138,10 @@
                   PreviewMouseRightButtonDown="ItemList_RightDown"
                   PreviewMouseLeftButtonDown="ItemList_LeftDown"
                   PreviewMouseLeftButtonUp="ItemList_LeftUp" PreviewMouseMove="ItemList_MouseMove"
-                  AllowDrop="True" DragOver="ItemList_DragOver" Drop="ItemList_Drop">
+                  AllowDrop="True" DragOver="ItemList_DragOver" Drop="ItemList_Drop"
+                  GridViewColumnHeader.Click="Header_Click">
             <ListView.View>
-                <GridView>
+                <GridView AllowsColumnReorder="False">
                     <GridViewColumn Header="{l:T Col_Name}" Width="230">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>

@@ -123,7 +123,7 @@ public sealed class PaneViewModel : ObservableObject
         try
         {
             path = Normalize(path);
-            list = Enumerate(path, "");
+            list = Sort(Enumerate(path, ""));
         }
         catch (Exception ex)
         {
@@ -172,7 +172,7 @@ public sealed class PaneViewModel : ObservableObject
     {
         try
         {
-            Items = Enumerate(CurrentPath, Filter);
+            Items = Sort(Enumerate(CurrentPath, Filter));
         }
         catch (Exception ex)
         {
@@ -196,6 +196,47 @@ public sealed class PaneViewModel : ObservableObject
         {
             Error?.Invoke(this, ex.Message);
         }
+    }
+
+    // ---- Sorting (column header click) ----
+
+    public enum SortKey { Name, Modified, Type, Size }
+
+    public SortKey SortBy { get; private set; } = SortKey.Name;
+    public bool SortDescending { get; private set; }
+
+    /// <summary>Click on a column: sort by it, or flip the order if it is already the sort column.</summary>
+    public void SetSort(SortKey key)
+    {
+        if (SortBy == key) SortDescending = !SortDescending;
+        else
+        {
+            SortBy = key;
+            SortDescending = key is SortKey.Modified or SortKey.Size; // newest / biggest first, like Explorer
+        }
+        Items = Sort(Items);
+    }
+
+    /// <summary>Folders always come first (like Explorer); within each group the chosen column decides.</summary>
+    private List<FsItem> Sort(List<FsItem> items)
+    {
+        var cmp = StringComparer.CurrentCultureIgnoreCase;
+        IEnumerable<FsItem> folders = items.Where(i => i.IsDirectory), files = items.Where(i => !i.IsDirectory);
+
+        IOrderedEnumerable<FsItem> Order(IEnumerable<FsItem> src) => (SortBy, SortDescending) switch
+        {
+            (SortKey.Modified, false) => src.OrderBy(i => i.Modified ?? DateTime.MinValue),
+            (SortKey.Modified, true) => src.OrderByDescending(i => i.Modified ?? DateTime.MinValue),
+            (SortKey.Size, false) => src.OrderBy(i => i.Size ?? -1),
+            (SortKey.Size, true) => src.OrderByDescending(i => i.Size ?? -1),
+            (SortKey.Type, false) => src.OrderBy(i => i.TypeText, cmp),
+            (SortKey.Type, true) => src.OrderByDescending(i => i.TypeText, cmp),
+            (_, false) => src.OrderBy(i => i.Name, cmp),
+            _ => src.OrderByDescending(i => i.Name, cmp),
+        };
+
+        // Ties (same size, same type...) are broken by name.
+        return Order(folders).ThenBy(i => i.Name, cmp).Concat(Order(files).ThenBy(i => i.Name, cmp)).ToList();
     }
 
     private static List<FsItem> Enumerate(string path, string filter)
@@ -229,9 +270,6 @@ public sealed class PaneViewModel : ObservableObject
             list.Add(FsItem.FromInfo(info));
         }
 
-        return list
-            .OrderByDescending(i => i.IsDirectory)
-            .ThenBy(i => i.Name, StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+        return list;
     }
 }

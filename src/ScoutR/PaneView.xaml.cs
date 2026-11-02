@@ -106,6 +106,27 @@ public partial class PaneView : UserControl
         }
     }
 
+    // ---- Sorting ----
+
+    private readonly Dictionary<GridViewColumn, string> _headerText = new();
+
+    private void Header_Click(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not GridViewColumnHeader { Column: { } column } || Vm is null) return;
+        if (ItemList.View is not GridView grid) return;
+
+        foreach (var c in grid.Columns)
+            if (!_headerText.ContainsKey(c)) _headerText[c] = c.Header?.ToString() ?? "";
+
+        int index = grid.Columns.IndexOf(column);
+        var key = (PaneViewModel.SortKey)Math.Clamp(index, 0, 3); // Name, Date modified, Type, Size
+        Vm.SetSort(key);
+
+        // Small arrow on the sorted column, like Explorer.
+        foreach (var c in grid.Columns)
+            c.Header = c == column ? _headerText[c] + (Vm.SortDescending ? "  \u2193" : "  \u2191") : _headerText[c];
+    }
+
     // ---- Drag & drop ----
 
     private Point? _dragStart;
