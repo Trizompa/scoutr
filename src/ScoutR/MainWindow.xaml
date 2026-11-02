@@ -104,7 +104,8 @@
             <DockPanel Grid.Column="0">
                 <DockPanel.Resources>
                     <DataTemplate x:Key="PinTemplate">
-                                <Button Click="QuickLink_Click" MouseRightButtonUp="QuickLink_RightClick" Tag="{Binding}" ToolTip="{Binding Path}"
+                                <Button Click="QuickLink_Click" MouseRightButtonUp="QuickLink_RightClick" Tag="{Binding}"
+                                        PreviewMouseLeftButtonDown="Pin_MouseDown" PreviewMouseMove="Pin_MouseMove" ToolTip="{Binding Path}"
                                         Focusable="False" Cursor="Hand">
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">

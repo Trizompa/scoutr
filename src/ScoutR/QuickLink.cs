@@ -102,5 +102,16 @@ public sealed class PinList
         Save();
     }
 
+    /// <summary>Moves (or adds) a folder to position <paramref name="index"/> in the list.</summary>
+    public void MoveTo(string path, int index)
+    {
+        int i = IndexOf(path);
+        if (i >= 0) Paths.RemoveAt(i);
+        else if (!Directory.Exists(path)) return;
+        if (i >= 0 && i < index) index--; // the list got one shorter before the target
+        Paths.Insert(Math.Clamp(index, 0, Paths.Count), path);
+        Save();
+    }
+
     public List<QuickLink> Links() => Paths.Where(Directory.Exists).Select(p => QuickLink.For(Group, p)).ToList();
 }

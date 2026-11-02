@@ -230,20 +230,66 @@ public partial class MainWindow : Window
     }
 
     /// <summary>Folders dropped on Quick access / Working folders get pinned there (the panel's Tag says which).</summary>
+    private const string PinFormat = "ScoutR.Pin";
+    private Point? _pinDragStart;
+
+    /// <summary>Pressing on a link: remember where, so a move can start a drag (to reorder).</summary>
+    private void Pin_MouseDown(object sender, MouseButtonEventArgs e) => _pinDragStart = e.GetPosition(this);
+
+    private void Pin_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_pinDragStart is not { } start || e.LeftButton != MouseButtonState.Pressed ||
+            sender is not Button { Tag: QuickLink link } button) return;
+        var d = e.GetPosition(this) - start;
+        if (Math.Abs(d.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(d.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+
+        _pinDragStart = null;
+        // Only our own format: dropping a link on a pane must never move the real folder.
+        DragDrop.DoDragDrop(button, new DataObject(PinFormat, link), DragDropEffects.Move);
+    }
+
+    /// <summary>Index of the link under the mouse (drop goes before it), or the end of the list.</summary>
+    private static int DropIndex(DragEventArgs e, PinList list)
+    {
+        var hit = e.OriginalSource as DependencyObject;
+        while (hit is not null && hit is not Button)
+            hit = hit is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(hit) : null;
+        if (hit is Button { Tag: QuickLink over } b)
+        {
+            int i = list.Paths.FindIndex(p => string.Equals(p, over.Path, StringComparison.OrdinalIgnoreCase));
+            if (i >= 0) return e.GetPosition(b).Y > b.ActualHeight / 2 ? i + 1 : i;
+        }
+        return list.Paths.Count;
+    }
+
+    /// <summary>Folders dropped on Quick access / My Worklist get pinned; links dragged inside get reordered.</summary>
     private void Pins_DragOver(object sender, DragEventArgs e)
     {
-        bool folders = e.Data.GetData(DataFormats.FileDrop) is string[] p && p.Any(Directory.Exists);
-        // Pinning only adds a link; nothing is copied. Use whichever effect the source allows.
-        e.Effects = !folders ? DragDropEffects.None
-            : (e.AllowedEffects & DragDropEffects.Link) != 0 ? DragDropEffects.Link
-            : DragDropEffects.Copy;
+        if (e.Data.GetDataPresent(PinFormat)) e.Effects = DragDropEffects.Move;
+        else
+        {
+            bool folders = e.Data.GetData(DataFormats.FileDrop) is string[] p && p.Any(Directory.Exists);
+            // Pinning only adds a link; nothing is copied. Use whichever effect the source allows.
+            e.Effects = !folders ? DragDropEffects.None
+                : (e.AllowedEffects & DragDropEffects.Link) != 0 ? DragDropEffects.Link
+                : DragDropEffects.Copy;
+        }
         e.Handled = true;
     }
 
     private void Pins_Drop(object sender, DragEventArgs e)
     {
-        if (sender is FrameworkElement { Tag: string group } && e.Data.GetData(DataFormats.FileDrop) is string[] paths)
-            foreach (string p in paths.Where(Directory.Exists)) Pin(group, p);
+        if (sender is not FrameworkElement { Tag: string group }) return;
+        var list = ListFor(group);
+        int index = DropIndex(e, list);
+
+        if (e.Data.GetData(PinFormat) is QuickLink link)
+            list.MoveTo(link.Path, index); // same list: reorder; other list: pin it there too
+        else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+            foreach (string p in paths.Where(Directory.Exists)) list.MoveTo(p, index++);
+
+        RefreshPins();
         e.Handled = true;
     }
 
