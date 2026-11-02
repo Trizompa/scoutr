@@ -43,6 +43,8 @@ public sealed class FsItem
     public string FullPath { get; init; } = "";
     public bool IsDirectory { get; init; }
     public bool IsDrive { get; init; }
+    /// <summary>Folder with its own icon set in Windows (Properties > Customize > Change Icon).</summary>
+    public bool HasCustomIcon { get; init; }
     public long? Size { get; init; }
     public DateTime? Modified { get; init; }
 
@@ -97,6 +99,7 @@ public sealed class FsItem
             IsDirectory = isDir,
             Size = size,
             Modified = modified,
+            HasCustomIcon = isDir && ShellInfo.HasCustomIcon(fi),
         };
     }
 

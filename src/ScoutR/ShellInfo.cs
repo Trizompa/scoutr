@@ -95,6 +95,23 @@ public static class ShellInfo
         }
     }
 
+    /// <summary>
+    /// True for a folder customised in Windows: it is marked read-only or system and has a desktop.ini.
+    /// Only those are asked to Windows for their icon; all others use the shared folder icon (fast).
+    /// </summary>
+    public static bool HasCustomIcon(FileSystemInfo dir)
+    {
+        try
+        {
+            return (dir.Attributes & (FileAttributes.ReadOnly | FileAttributes.System)) != 0 &&
+                   File.Exists(Path.Combine(dir.FullName, "desktop.ini"));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>The folder's own icon (special icons for Desktop, Downloads, Documents...).</summary>
     public static BitmapSource? FolderIcon(string path) =>
         IconCache.GetOrAdd("folder:" + path, _ => LoadIcon(path, 0, 0)) ?? ShellIcons.Folder;
@@ -143,7 +160,7 @@ public static class ShellInfo
     public static BitmapSource? Icon(FsItem item)
     {
         if (item.IsDrive) return DriveIcon(item.FullPath);
-        if (item.IsDirectory) return ShellIcons.Folder;
+        if (item.IsDirectory) return item.HasCustomIcon ? FolderIcon(item.FullPath) : ShellIcons.Folder;
 
         string ext = Path.GetExtension(item.Name);
         if (OwnIcon.Contains(ext))

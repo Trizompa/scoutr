@@ -120,7 +120,12 @@ public sealed class TreeNodeVm : ObservableObject
 
     /// <summary>Windows' own folder / drive icon (open folder when expanded).</summary>
     public System.Windows.Media.ImageSource? Icon =>
-        IsDrive ? ShellInfo.DriveIcon(Path) : IsExpanded ? ShellIcons.FolderOpen : ShellIcons.Folder;
+        IsDrive ? ShellInfo.DriveIcon(Path) :
+        CustomIcon ? ShellInfo.FolderIcon(Path) :
+        IsExpanded ? ShellIcons.FolderOpen : ShellIcons.Folder;
+
+    /// <summary>Folder with its own Windows icon (desktop.ini).</summary>
+    public bool CustomIcon { get; init; }
 
     public bool ShowShellIcon => IsFolderShape && ShellIcons.Available;
     public bool ShowDrawnIcon => IsFolderShape && !ShellIcons.Available;
@@ -175,7 +180,7 @@ public sealed class TreeNodeVm : ObservableObject
                     .Where(d => (d.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
                     .OrderBy(d => d.Name, StringComparer.CurrentCultureIgnoreCase);
                 foreach (var d in dirs)
-                    Children.Add(new TreeNodeVm(_model, d.Name, d.FullName));
+                    Children.Add(new TreeNodeVm(_model, d.Name, d.FullName) { CustomIcon = ShellInfo.HasCustomIcon(d) });
             }
         }
         catch
