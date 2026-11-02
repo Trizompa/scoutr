@@ -3,7 +3,7 @@ using System.IO;
 namespace ScoutR;
 
 /// <summary>One file used by the assembly being copied (found by walking its references).</summary>
-public sealed record DesignFile(string Path, bool Missing, int Depth);
+public sealed record DesignFile(string Path, bool Missing, int Depth, bool IsDrawing = false);
 
 /// <summary>
 /// "Copy design": copies an assembly with the files it uses (Frame Generator sketch, skeleton, frame
@@ -47,6 +47,56 @@ public static partial class InventorProps
         }
     });
 
+    private static bool IsLinkable(string path) =>
+        IsInventorFile(path) || Path.GetExtension(path).Equals(".dwg", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Drawings (.idw, Inventor .dwg) and presentations (.ipn) under <paramref name="root"/> that show any
+    /// of <paramref name="models"/>: models don't know their drawings, so the folders are searched.
+    /// Inventor's "OldVersions" backups are skipped; files Apprentice can't open (AutoCAD .dwg) too.
+    /// </summary>
+    public static Task<List<DesignFile>> FindDrawingsAsync(string root, IReadOnlyCollection<string> models,
+        IProgress<string> progress) => Worker.Run(() =>
+    {
+        var wanted = new HashSet<string>(models, StringComparer.OrdinalIgnoreCase);
+        var found = new List<DesignFile>();
+        IEnumerable<string> files;
+        try
+        {
+            files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+                .Where(f => Path.GetExtension(f).ToLowerInvariant() is ".idw" or ".dwg" or ".ipn" &&
+                            f.IndexOf("\\OldVersions\\", StringComparison.OrdinalIgnoreCase) < 0 &&
+                            !wanted.Contains(f))
+                .ToList();
+        }
+        catch
+        {
+            return found;
+        }
+
+        foreach (string f in files)
+        {
+            progress.Report(Path.GetFileName(f));
+            object? doc = null;
+            try
+            {
+                doc = Open(f);
+                bool uses = Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!)
+                    .Any(d => Get(d, "FullFileName") is string p && wanted.Contains(p));
+                if (uses) found.Add(new DesignFile(f, false, 0, IsDrawing: true));
+            }
+            catch
+            {
+                // not an Inventor file, or unreadable: skipped
+            }
+            finally
+            {
+                if (doc is not null) Close(doc);
+            }
+        }
+        return found;
+    });
+
     /// <summary>
     /// Copies the files (old path → new path), then rewrites the references inside each copy so that it
     /// uses the new files. In the copies listed in <paramref name="renamePartNumber"/> (new paths),
@@ -70,8 +120,11 @@ public static partial class InventorProps
         // 2. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
         //    which is what lets ReplaceReference accept it).
         int relinked = 0;
-        foreach (string to in map.Values.Where(IsInventorFile)
-                     .OrderBy(p => Path.GetExtension(p).Equals(".ipt", StringComparison.OrdinalIgnoreCase) ? 0 : 1))
+        foreach (string to in map.Values.Where(IsLinkable)
+                     .OrderBy(p => Path.GetExtension(p).ToLowerInvariant() switch
+                     {
+                         ".ipt" => 0, ".iam" => 1, _ => 2, // drawings last
+                     }))
         {
             progress.Report(Path.GetFileName(to));
             object doc = Open(to);
@@ -102,7 +155,7 @@ public static partial class InventorProps
             }
         }
         // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
-        foreach (string to in map.Values.Where(p => IsInventorFile(p) && renamePartNumber.Contains(p)))
+        foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
         {
             progress.Report(Path.GetFileName(to));
             object doc = Open(to);

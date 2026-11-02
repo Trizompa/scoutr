@@ -16,6 +16,7 @@ public sealed class DesignRow : ObservableObject
     {
         Path = file.Path;
         Missing = file.Missing;
+        IsDrawing = file.IsDrawing;
         Indent = new Thickness(file.Depth * 16, 0, 0, 0);
         // Copied by default: what lives next to the top assembly or in its folders (sketch, frame,
         // skeleton, members). Reused: Content Center, libraries, anything elsewhere, missing files.
@@ -39,7 +40,8 @@ public sealed class DesignRow : ObservableObject
     public Thickness Indent { get; }
     public string OldName { get; }
     public bool CanCopy => !Missing;
-    public bool CanRenamePn => _copy && InventorProps.IsInventorFile(Path);
+    public bool CanRenamePn => _copy && (InventorProps.IsInventorFile(Path) || IsDrawing);
+    public bool IsDrawing { get; }
 
     public bool Copy
     {
@@ -92,6 +94,29 @@ public partial class CopyDesignWindow : Window
             Refresh();
             ReplaceBox.Focus();
             ReplaceBox.SelectAll();
+
+            // Then the drawings that show any of these files (searched in the folder and its subfolders).
+            var progress = new Progress<string>(n => StatusText.Text = Loc.Get("Copy_SearchingDrawings", n));
+            _busy = true; // no Copy until the search is over, or the drawings would be left out
+            CopyBtn.IsEnabled = false;
+            List<DesignFile> drawings;
+            try
+            {
+                drawings = await InventorProps.FindDrawingsAsync(_root, _rows.Select(r => r.Path).ToList(), progress);
+            }
+            finally
+            {
+                _busy = false;
+            }
+            foreach (var d in drawings.OrderBy(d => d.Path, StringComparer.OrdinalIgnoreCase))
+            {
+                var row = new DesignRow(d, _root);
+                row.Changed += Refresh;
+                _rows.Add(row);
+            }
+            FileList.ItemsSource = null;
+            FileList.ItemsSource = _rows;
+            Refresh();
         }
         catch (Exception ex)
         {

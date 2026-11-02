@@ -140,4 +140,5 @@
 
 Files already copied were left in place; the originals were not changed.</value></data>
   <data name="Copy_Done" xml:space="preserve"><value>Design copied</value></data>
+  <data name="Copy_SearchingDrawings" xml:space="preserve"><value>Looking for drawings: {0}</value></data>
 </root>
