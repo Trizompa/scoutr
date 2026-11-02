@@ -165,7 +165,7 @@ public partial class IPropsPanel : UserControl
             row.ActualHeight <= 0) return;
         double top = row.TranslatePoint(new Point(0, 0), Body).Y + 2; // the row's own top margin
         double size = Math.Round(6 * row.ActualHeight - 4);
-        ThumbBox.Margin = new Thickness(0, Math.Max(0, top), 20, 0);
+        ThumbBox.Margin = new Thickness(0, Math.Max(0, top), 0, 0);
         ThumbBox.Width = ThumbBox.Height = size;
     }
 
