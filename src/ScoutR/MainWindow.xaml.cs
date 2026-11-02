@@ -53,6 +53,12 @@ public partial class MainWindow : Window
         ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
         ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
         PropsPanel.CloseRequested += (_, _) => ShowProps(false);
+        PropsPanel.Hidden = new HashSet<string>(_settings.HiddenIProps, StringComparer.OrdinalIgnoreCase);
+        PropsPanel.HiddenChanged += (_, _) =>
+        {
+            _settings.HiddenIProps = PropsPanel.Hidden.ToList();
+            _settings.Save();
+        };
         PropsPanel.Saved += (_, _) => { _a.Reload(); _b.Reload(); };
         ViewA.Activated += (_, _) => SetActive(_a);
         ViewB.Activated += (_, _) => SetActive(_b);

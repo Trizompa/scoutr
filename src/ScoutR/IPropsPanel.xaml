@@ -32,6 +32,35 @@
                 </TextBox>
             </Grid>
         </DataTemplate>
+        <!-- Custom property: same as above plus a delete button -->
+        <DataTemplate x:Key="CustomRow">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="&#xE711;" FontFamily="Segoe MDL2 Assets" FontSize="10"
+                        Width="22" Margin="4,0,0,0" Focusable="False" Cursor="Hand" ToolTip="{l:T IProps_Delete}"
+                        Tag="{Binding}" Click="DeleteCustom_Click" Background="Transparent" BorderThickness="0"
+                        Foreground="{StaticResource MutedBrush}"/>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource PropRow}" Focusable="False"/>
+            </DockPanel>
+        </DataTemplate>
+        <Style x:Key="LinkBtn" TargetType="Button">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="3" Padding="6,1">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
@@ -53,6 +82,15 @@
                         Content="{l:T IProps_Save}" Click="Save_Click" IsEnabled="False"/>
                 <Button x:Name="RevertBtn" DockPanel.Dock="Right" Style="{StaticResource PanelBtn}"
                         Content="{l:T IProps_Revert}" Click="Revert_Click" IsEnabled="False"/>
+                <!-- Choose which standard fields are shown -->
+                <Button x:Name="FieldsBtn" DockPanel.Dock="Right" Style="{StaticResource LinkBtn}" Margin="0,0,10,0"
+                        Click="Fields_Click" ToolTip="{l:T IProps_FieldsTip}" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE71C;" FontFamily="Segoe MDL2 Assets" FontSize="11" Margin="0,0,5,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{l:T IProps_Fields}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
                 <TextBlock Text="iProperties" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <TextBlock x:Name="FileText" Margin="10,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                 <TextBlock x:Name="InfoText" Margin="12,0,0,0" Foreground="{StaticResource MutedBrush}"
@@ -77,8 +115,18 @@
                     <ItemsControl ItemsSource="{Binding Project}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
                 <StackPanel Grid.Column="4">
-                    <TextBlock Text="{l:T IProps_Custom}" Style="{StaticResource SectionTitle}"/>
-                    <ItemsControl ItemsSource="{Binding Custom}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
+                    <DockPanel Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource LinkBtn}" Click="AddCustom_Click"
+                                ToolTip="{l:T IProps_AddTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="0,0,5,0"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{l:T IProps_Add}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="{l:T IProps_Custom}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <ItemsControl ItemsSource="{Binding Custom}" ItemTemplate="{StaticResource CustomRow}" Focusable="False"/>
                     <TextBlock x:Name="NoCustom" Text="{l:T IProps_NoCustom}" Foreground="{StaticResource MutedBrush}"
                                FontStyle="Italic"/>
                 </StackPanel>

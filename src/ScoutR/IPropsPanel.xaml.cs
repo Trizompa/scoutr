@@ -10,12 +10,16 @@ public sealed class IPropRow : ObservableObject
 {
     private string _value;
 
-    public IPropRow(IPropValue source)
+    public IPropRow(IPropValue source, bool isNew = false)
     {
         Source = source;
+        IsNew = isNew;
         Original = InventorProps.Format(source.Value);
         _value = Original;
     }
+
+    /// <summary>Custom property added in the panel, not yet written to the file.</summary>
+    public bool IsNew { get; private set; }
 
     public IPropValue Source { get; }
     public string Label => Source.Label;
@@ -31,13 +35,14 @@ public sealed class IPropRow : ObservableObject
         }
     }
 
-    public bool IsDirty => !ReadOnly && _value != Original;
+    public bool IsDirty => IsNew || (!ReadOnly && _value != Original);
 
     public void Revert() => Value = Original;
 
     public void Accept()
     {
         Original = _value;
+        IsNew = false;
         OnPropertyChanged(nameof(IsDirty));
     }
 }
@@ -51,6 +56,14 @@ public partial class IPropsPanel : UserControl
 
     private string? _path;
     private int _token;
+    private List<IPropValue> _props = new();
+    private readonly List<IPropRow> _deleted = new();
+
+    /// <summary>Standard fields the user hid (shared with the saved settings).</summary>
+    public HashSet<string> Hidden { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Raised when the user shows/hides a field, so the choice can be saved.</summary>
+    public event EventHandler? HiddenChanged;
 
     public event EventHandler? CloseRequested;
 
@@ -66,7 +79,7 @@ public partial class IPropsPanel : UserControl
 
     private IEnumerable<IPropRow> AllRows => Summary.Concat(Project).Concat(Custom);
 
-    public bool IsDirty => AllRows.Any(r => r.IsDirty);
+    public bool IsDirty => _deleted.Count > 0 || AllRows.Any(r => r.IsDirty);
 
     private void ShowMessage(string text)
     {
@@ -88,6 +101,7 @@ public partial class IPropsPanel : UserControl
         Summary.Clear();
         Project.Clear();
         Custom.Clear();
+        _deleted.Clear();
         UpdateButtons();
     }
 
@@ -124,11 +138,8 @@ public partial class IPropsPanel : UserControl
             var props = await InventorProps.ReadAsync(path);
             if (token != _token) return; // the selection moved on meanwhile
 
-            Fill(Summary, props.Where(p => p.Set is InventorProps.SummarySet or InventorProps.DocSummarySet),
-                InventorProps.SummaryNames);
-            Fill(Project, props.Where(p => p.Set == InventorProps.ProjectSet), InventorProps.ProjectNames);
-            Fill(Custom, props.Where(p => p.Set == InventorProps.CustomSet).OrderBy(p => p.Label), null);
-            NoCustom.Visibility = Custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            _props = props;
+            FillAll();
 
             bool readOnly = (File.GetAttributes(path) & FileAttributes.ReadOnly) != 0;
             InfoText.Text = readOnly ? Loc.Get("IProps_ReadOnlyFile") : "";
@@ -139,6 +150,20 @@ public partial class IPropsPanel : UserControl
             if (token == _token) InfoText.Text = Loc.Get("Msg_Error", ex.Message);
         }
     }
+
+    private void FillAll()
+    {
+        Clear();
+        Fill(Summary, _props.Where(p => p.Set is InventorProps.SummarySet or InventorProps.DocSummarySet
+                                        && !Hidden.Contains(p.Name)), InventorProps.SummaryNames);
+        Fill(Project, _props.Where(p => p.Set == InventorProps.ProjectSet && !Hidden.Contains(p.Name)),
+            InventorProps.ProjectNames);
+        Fill(Custom, _props.Where(p => p.Set == InventorProps.CustomSet).OrderBy(p => p.Label), null);
+        UpdateNoCustom();
+    }
+
+    private void UpdateNoCustom() =>
+        NoCustom.Visibility = Custom.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
     private void Fill(ObservableCollection<IPropRow> into, IEnumerable<IPropValue> props, string[]? order)
     {
@@ -157,17 +182,21 @@ public partial class IPropsPanel : UserControl
     {
         if (_path is null) return;
         var dirty = AllRows.Where(r => r.IsDirty).ToList();
-        if (dirty.Count == 0) return;
+        if (dirty.Count == 0 && _deleted.Count == 0) return;
 
         try
         {
-            var changes = dirty
-                .Select(r => (r.Source.Set, r.Source.Name, InventorProps.Parse(r.Value, r.Source.Value)))
+            var changes = _deleted
+                .Select(r => new IPropChange(r.Source.Set, r.Source.Name, null, IPropChangeKind.Delete))
+                .Concat(dirty.Select(r => new IPropChange(r.Source.Set, r.Source.Name,
+                    r.IsNew ? r.Value : InventorProps.Parse(r.Value, r.Source.Value),
+                    r.IsNew ? IPropChangeKind.Add : IPropChangeKind.Update)))
                 .ToList();
             SaveBtn.IsEnabled = false;
             InfoText.Text = Loc.Get("IProps_Saving");
             await InventorProps.WriteAsync(_path, changes);
             foreach (var r in dirty) r.Accept();
+            _deleted.Clear();
             InfoText.Text = Loc.Get("IProps_Saved");
             Saved?.Invoke(this, EventArgs.Empty);
         }
@@ -182,8 +211,64 @@ public partial class IPropsPanel : UserControl
 
     private void Revert_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var r in AllRows) r.Revert();
+        FillAll(); // drops added rows, brings back deleted ones, restores values
         InfoText.Text = "";
+    }
+
+    /// <summary>"+ Add": new custom property; written to the file on Save.</summary>
+    private void AddCustom_Click(object sender, RoutedEventArgs e)
+    {
+        if (_path is null) return;
+        string? name = InputDialog.Ask(Window.GetWindow(this)!, Loc.Get("IProps_AddTitle"), Loc.Get("IProps_AddLabel"),
+            "", selectStemOnly: false);
+        if (name is null) return;
+        if (Custom.Any(r => string.Equals(r.Source.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            InfoText.Text = Loc.Get("IProps_Exists", name);
+            return;
+        }
+        var row = new IPropRow(new IPropValue(InventorProps.CustomSet, name, name, "", false), isNew: true);
+        row.PropertyChanged += Row_Changed;
+        Custom.Add(row);
+        UpdateNoCustom();
+        UpdateButtons();
+    }
+
+    /// <summary>✕ on a custom property: removed from the file on Save.</summary>
+    private void DeleteCustom_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: IPropRow row }) return;
+        row.PropertyChanged -= Row_Changed;
+        Custom.Remove(row);
+        if (!row.IsNew) _deleted.Add(row);
+        UpdateNoCustom();
+        UpdateButtons();
+    }
+
+    /// <summary>Menu with a tick for every standard field: untick to hide it.</summary>
+    private void Fields_Click(object sender, RoutedEventArgs e)
+    {
+        var menu = new ContextMenu { PlacementTarget = FieldsBtn };
+        void AddGroup(string title, IEnumerable<string> names)
+        {
+            menu.Items.Add(new MenuItem { Header = title, IsEnabled = false, FontWeight = FontWeights.SemiBold });
+            foreach (string name in names)
+            {
+                var item = new MenuItem { Header = name, IsCheckable = true, IsChecked = !Hidden.Contains(name),
+                                          StaysOpenOnClick = true };
+                item.Click += (_, _) =>
+                {
+                    if (item.IsChecked) Hidden.Remove(name); else Hidden.Add(name);
+                    HiddenChanged?.Invoke(this, EventArgs.Empty);
+                    if (!IsDirty && _props.Count > 0) FillAll();
+                };
+                menu.Items.Add(item);
+            }
+        }
+        AddGroup(Loc.Get("IProps_Summary"), InventorProps.SummaryNames);
+        menu.Items.Add(new Separator());
+        AddGroup(Loc.Get("IProps_Project"), InventorProps.ProjectNames);
+        menu.IsOpen = true;
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);

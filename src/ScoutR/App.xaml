@@ -258,16 +258,20 @@
                             <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,3" Margin="0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"
+                                    <!-- Tick for on/off entries (e.g. the iProperties Fields list) -->
+                                    <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe MDL2 Assets" FontSize="11"
+                                               Width="20" VerticalAlignment="Center" Visibility="Collapsed"/>
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header" RecognizesAccessKey="True"
                                                       VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{TemplateBinding InputGestureText}" Margin="28,0,0,0"
+                                    <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Margin="28,0,0,0"
                                                Foreground="#767676" VerticalAlignment="Center"/>
                                     <!-- Arrow for entries with a submenu (New > ...) -->
-                                    <TextBlock x:Name="Arrow" Grid.Column="2" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                                    <TextBlock x:Name="Arrow" Grid.Column="3" Text="&#xE76C;" FontFamily="Segoe MDL2 Assets"
                                                FontSize="9" Margin="16,0,0,0" VerticalAlignment="Center"
                                                Foreground="#767676" Visibility="Collapsed"/>
                                 </Grid>
@@ -287,6 +291,12 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="HasItems" Value="True">
                                 <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsCheckable" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Hidden"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
                             </Trigger>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="Bd" Property="Background" Value="#F0F0F0"/>

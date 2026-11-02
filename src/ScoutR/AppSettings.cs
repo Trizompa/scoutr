@@ -9,6 +9,8 @@ public sealed class AppSettings
     public PaneSettings A { get; set; } = new();
     public PaneSettings B { get; set; } = new();
     public double TreeWidth { get; set; }
+    /// <summary>Standard iProperties the user chose not to show (Fields menu of the iProperties panel).</summary>
+    public List<string> HiddenIProps { get; set; } = new();
 
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ScoutR", "settings.json");

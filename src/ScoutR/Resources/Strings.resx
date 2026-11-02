@@ -107,4 +107,12 @@
   <data name="IProps_ReadOnlyFile" xml:space="preserve"><value>The file is read-only (checked in to Vault?): check it out to edit.</value></data>
   <data name="IProps_NoApprentice" xml:space="preserve"><value>Inventor Apprentice not found: it is installed with Autodesk Inventor.</value></data>
   <data name="IProps_SaveChanges" xml:space="preserve"><value>Save the iProperties changes to {0}?</value></data>
+  <data name="IProps_Fields" xml:space="preserve"><value>Fields</value></data>
+  <data name="IProps_FieldsTip" xml:space="preserve"><value>Choose which fields are shown</value></data>
+  <data name="IProps_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="IProps_AddTip" xml:space="preserve"><value>Add a custom iProperty (written on Save)</value></data>
+  <data name="IProps_AddTitle" xml:space="preserve"><value>New custom iProperty</value></data>
+  <data name="IProps_AddLabel" xml:space="preserve"><value>Property name:</value></data>
+  <data name="IProps_Exists" xml:space="preserve"><value>'{0}' already exists.</value></data>
+  <data name="IProps_Delete" xml:space="preserve"><value>Delete this custom iProperty (on Save)</value></data>
 </root>

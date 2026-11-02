@@ -5,6 +5,11 @@ using System.Reflection;
 
 namespace ScoutR;
 
+public enum IPropChangeKind { Update, Add, Delete }
+
+/// <summary>One change to write: a new value, a new custom property, or a deleted one.</summary>
+public sealed record IPropChange(string Set, string Name, object? Value, IPropChangeKind Kind);
+
 /// <summary>One iProperty: which property set it lives in, its name, its value.</summary>
 public sealed record IPropValue(string Set, string Name, string Label, object? Value, bool ReadOnly);
 
@@ -26,8 +31,8 @@ public static class InventorProps
     public static readonly string[] SummaryNames =
         { "Title", "Subject", "Author", "Revision Number", "Keywords", "Comments", "Category", "Manager", "Company" };
     public static readonly string[] ProjectNames =
-        { "Part Number", "Stock Number", "Description", "Project", "Designer", "Engineer", "Vendor", "Cost Center",
-          "Material", "Mass" };
+        { "Part Number", "Stock Number", "Description", "Project", "Designer", "Engineer", "Checked By",
+          "Engr Approved By", "Mfg Approved By", "Vendor", "Cost Center", "Catalog Web Link", "Material", "Mass" };
     private static readonly HashSet<string> ReadOnlyNames = new(StringComparer.OrdinalIgnoreCase) { "Material", "Mass" };
 
     private static readonly HashSet<string> Extensions = new(StringComparer.OrdinalIgnoreCase)
@@ -120,8 +125,8 @@ public static class InventorProps
         return list;
     });
 
-    /// <summary>Writes the changed values back into the file.</summary>
-    public static Task WriteAsync(string path, IReadOnlyList<(string Set, string Name, object? Value)> changes) =>
+    /// <summary>Writes the changes (edited, added and deleted properties) back into the file.</summary>
+    public static Task WriteAsync(string path, IReadOnlyList<IPropChange> changes) =>
         Worker.Run(() =>
         {
             if ((File.GetAttributes(path) & FileAttributes.ReadOnly) != 0)
@@ -133,12 +138,18 @@ public static class InventorProps
                 object sets = Get(doc, "PropertySets")!;
                 foreach (var change in changes)
                 {
-                    object? target = Items(sets)
-                        .Where(set => Get(set, "Name") as string == change.Set)
-                        .SelectMany(Items)
-                        .FirstOrDefault(p => Get(p, "Name") as string == change.Name);
-                    if (target is null) throw new InvalidOperationException($"'{change.Name}' not found.");
-                    SetValue(target, "Value", change.Value);
+                    object set = Items(sets).FirstOrDefault(x => Get(x, "Name") as string == change.Set)
+                                 ?? throw new InvalidOperationException($"'{change.Set}' not found.");
+                    if (change.Kind == IPropChangeKind.Add)
+                    {
+                        Call(set, "Add", change.Value ?? "", change.Name); // PropertySet.Add(value, name)
+                        continue;
+                    }
+
+                    object target = Items(set).FirstOrDefault(x => Get(x, "Name") as string == change.Name)
+                                    ?? throw new InvalidOperationException($"'{change.Name}' not found.");
+                    if (change.Kind == IPropChangeKind.Delete) Call(target, "Delete");
+                    else SetValue(target, "Value", change.Value);
                 }
                 Call(sets, "FlushToFile");
             }
