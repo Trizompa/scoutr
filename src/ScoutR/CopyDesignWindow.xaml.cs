@@ -23,7 +23,15 @@ public sealed class DesignRow : ObservableObject
                  Path.IndexOf("\\Content Center Files\\", StringComparison.OrdinalIgnoreCase) < 0;
         OldName = InRoot ? System.IO.Path.GetRelativePath(root, Path) : Path;
         _copy = InRoot && !Missing;
+        // Frame Generator members ("... - 001.ipt") keep the Part Number Inventor generated for them.
+        _renamePn = !System.Text.RegularExpressions.Regex.IsMatch(
+            System.IO.Path.GetFileNameWithoutExtension(Path), @"\s-\s*\d+$");
     }
+
+    private bool _renamePn;
+
+    /// <summary>Also rename the "Part Number" iProperty of the copy (find → replace).</summary>
+    public bool RenamePn { get => _renamePn; set => Set(ref _renamePn, value); }
 
     public string Path { get; }
     public bool Missing { get; }
@@ -31,11 +39,12 @@ public sealed class DesignRow : ObservableObject
     public Thickness Indent { get; }
     public string OldName { get; }
     public bool CanCopy => !Missing;
+    public bool CanRenamePn => _copy && InventorProps.IsInventorFile(Path);
 
     public bool Copy
     {
         get => _copy;
-        set { if (Set(ref _copy, value)) Changed?.Invoke(); }
+        set { if (Set(ref _copy, value)) { OnPropertyChanged(nameof(CanRenamePn)); Changed?.Invoke(); } }
     }
 
     public string NewPath { get => _newPath; set => Set(ref _newPath, value); }
@@ -138,12 +147,13 @@ public partial class CopyDesignWindow : Window
         var map = _rows.Where(r => r.Copy).ToDictionary(r => r.Path, r => r.NewPath, StringComparer.OrdinalIgnoreCase);
         _busy = true;
         CopyBtn.IsEnabled = false;
-        FileList.IsEnabled = FindBox.IsEnabled = ReplaceBox.IsEnabled = PartNumbers.IsEnabled = false;
+        FileList.IsEnabled = FindBox.IsEnabled = ReplaceBox.IsEnabled = false;
+        var renamePn = new HashSet<string>(_rows.Where(r => r.Copy && r.RenamePn).Select(r => r.NewPath),
+            StringComparer.OrdinalIgnoreCase);
         var progress = new Progress<string>(name => StatusText.Text = Loc.Get("Copy_Working", name));
         try
         {
-            await InventorProps.CopyDesignAsync(map, FindBox.Text, ReplaceBox.Text, PartNumbers.IsChecked == true,
-                progress);
+            await InventorProps.CopyDesignAsync(map, FindBox.Text, ReplaceBox.Text, renamePn, progress);
             Result = map[_top];
             DialogResult = true;
         }

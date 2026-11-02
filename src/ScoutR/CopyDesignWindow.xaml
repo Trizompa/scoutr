@@ -18,8 +18,6 @@
             <TextBox x:Name="FindBox" Grid.Column="1" Padding="3,2" TextChanged="Rule_Changed"/>
             <TextBlock Grid.Column="2" Text="{l:T Copy_Replace}" VerticalAlignment="Center" Margin="16,0,8,0"/>
             <TextBox x:Name="ReplaceBox" Grid.Column="3" Padding="3,2" TextChanged="Rule_Changed"/>
-            <CheckBox x:Name="PartNumbers" Grid.Column="4" Content="{l:T Copy_PartNumbers}" IsChecked="True"
-                      VerticalAlignment="Center" Margin="16,0,0,0"/>
         </Grid>
         <TextBlock DockPanel.Dock="Top" x:Name="RootText" Foreground="{StaticResource MutedBrush}"
                    Margin="0,0,0,6" TextTrimming="CharacterEllipsis"/>
@@ -41,7 +39,15 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="{l:T Copy_ColFile}" Width="360">
+                    <GridViewColumn Header="{l:T Copy_ColPn}" Width="85">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <CheckBox IsChecked="{Binding RenamePn}" IsEnabled="{Binding CanRenamePn}"
+                                          ToolTip="{l:T Copy_PnTip}"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="{l:T Copy_ColFile}" Width="340">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding OldName}" ToolTip="{Binding Path}"
@@ -49,7 +55,7 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="{l:T Copy_ColNew}" Width="360">
+                    <GridViewColumn Header="{l:T Copy_ColNew}" Width="340">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding NewName}" ToolTip="{Binding NewPath}">

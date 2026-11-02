@@ -49,10 +49,11 @@ public static partial class InventorProps
 
     /// <summary>
     /// Copies the files (old path → new path), then rewrites the references inside each copy so that it
-    /// uses the new files. With <paramref name="partNumbers"/>, "Part Number" is renamed the same way.
+    /// uses the new files. In the copies listed in <paramref name="renamePartNumber"/> (new paths),
+    /// "Part Number" is renamed the same way.
     /// </summary>
     public static Task<int> CopyDesignAsync(IReadOnlyDictionary<string, string> map, string find, string replace,
-        bool partNumbers, IProgress<string> progress) => Worker.Run(() =>
+        ISet<string> renamePartNumber, IProgress<string> progress) => Worker.Run(() =>
     {
         // 1. Plain file copies, never over an existing file.
         foreach (var (from, to) in map)
@@ -87,7 +88,7 @@ public static partial class InventorProps
                     }
                 }
 
-                bool props = partNumbers && RenamePartNumber(doc, find, replace);
+                bool props = renamePartNumber.Contains(to) && RenamePartNumber(doc, find, replace);
 
                 if (refs)
                 {
