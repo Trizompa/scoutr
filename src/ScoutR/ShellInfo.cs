@@ -135,6 +135,50 @@ public static class ShellInfo
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
     }
 
+    [ComImport, Guid("bcc18b79-ba16-442f-80c4-8a59c30c463b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IShellItemImageFactory
+    {
+        [PreserveSig] int GetImage(NativeSize size, int flags, out IntPtr bitmap);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativeSize { public int Width, Height; }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    private static extern void SHCreateItemFromParsingName(string path, IntPtr bindCtx,
+        [MarshalAs(UnmanagedType.LPStruct)] Guid riid, [MarshalAs(UnmanagedType.Interface)] out IShellItemImageFactory item);
+
+    [DllImport("gdi32.dll")]
+    private static extern bool DeleteObject(IntPtr handle);
+
+    /// <summary>
+    /// The thumbnail Explorer shows for a file (Inventor installs its own thumbnail provider), or null.
+    /// </summary>
+    public static BitmapSource? Thumbnail(string path, int size)
+    {
+        try
+        {
+            SHCreateItemFromParsingName(path, IntPtr.Zero, typeof(IShellItemImageFactory).GUID, out var factory);
+            if (factory.GetImage(new NativeSize { Width = size, Height = size }, 0, out IntPtr hbm) != 0 ||
+                hbm == IntPtr.Zero) return null;
+            try
+            {
+                var bmp = Imaging.CreateBitmapSourceFromHBitmap(hbm, IntPtr.Zero, Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+                bmp.Freeze();
+                return bmp;
+            }
+            finally
+            {
+                DeleteObject(hbm);
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>Drive icon as Explorer shows it (Windows logo on the system disk, network icon...).</summary>
     public static BitmapSource? DriveIcon(string root) =>
         IconCache.GetOrAdd("drive:" + root, r => LoadIcon(root, 0, 0)) ?? ShellIcons.ForDrive(root);

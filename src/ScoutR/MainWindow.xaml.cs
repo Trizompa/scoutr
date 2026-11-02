@@ -53,6 +53,7 @@ public partial class MainWindow : Window
         ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
         ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
         PropsPanel.CloseRequested += (_, _) => ShowProps(false);
+        SizeChanged += (_, _) => PropsPanel.MaxHeight = Math.Max(150, ActualHeight * 0.6);
         PropsPanel.Hidden = new HashSet<string>(_settings.HiddenIProps, StringComparer.OrdinalIgnoreCase);
         PropsPanel.HiddenChanged += (_, _) =>
         {
@@ -335,16 +336,16 @@ public partial class MainWindow : Window
 
     // ---- iProperties panel ----
 
-    private double _propsHeight = 230;
 
     private void IProps_Click(object sender, RoutedEventArgs e) => ShowProps(PropsPanel.Visibility != Visibility.Visible);
 
     private void ShowProps(bool show)
     {
-        if (!show && PropsRow.ActualHeight > 60) _propsHeight = PropsRow.ActualHeight;
         PropsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         PropsSplitter.Visibility = PropsPanel.Visibility;
-        PropsRow.Height = show ? new GridLength(_propsHeight) : new GridLength(0);
+        // Height fits the visible fields (up to 60% of the window, then it scrolls).
+        PropsRow.Height = show ? GridLength.Auto : new GridLength(0);
+        PropsPanel.MaxHeight = Math.Max(150, ActualHeight * 0.6);
         BtnIProps.IsChecked = show; // ribbon button stays "on" while the panel is open
         if (show) UpdateProps();
     }

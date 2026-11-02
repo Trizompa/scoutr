@@ -100,21 +100,27 @@
         <ScrollViewer VerticalScrollBarVisibility="Auto" Focusable="False">
             <Grid x:Name="Body" Margin="12,8,12,8" Visibility="Collapsed">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="20"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0">
+                <!-- Thumbnail, as Explorer shows it -->
+                <Border Grid.Column="0" Width="140" Height="140" Margin="0,0,20,0" VerticalAlignment="Top"
+                        BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Background="White">
+                    <Image x:Name="Thumb" Stretch="Uniform" Margin="4" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Border>
+                <StackPanel Grid.Column="1">
                     <TextBlock Text="{l:T IProps_Summary}" Style="{StaticResource SectionTitle}"/>
                     <ItemsControl ItemsSource="{Binding Summary}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="2">
+                <StackPanel Grid.Column="3">
                     <TextBlock Text="{l:T IProps_Project}" Style="{StaticResource SectionTitle}"/>
                     <ItemsControl ItemsSource="{Binding Project}" ItemTemplate="{StaticResource PropRow}" Focusable="False"/>
                 </StackPanel>
-                <StackPanel Grid.Column="4">
+                <StackPanel Grid.Column="5">
                     <DockPanel Margin="0,0,0,4">
                         <Button DockPanel.Dock="Right" Style="{StaticResource LinkBtn}" Click="AddCustom_Click"
                                 ToolTip="{l:T IProps_AddTip}">

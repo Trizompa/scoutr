@@ -227,10 +227,10 @@
             <l:PaneView x:Name="ViewB" Grid.Column="4"/>
 
             <!-- iProperties panel (Inventor files), shown on request under the two panes -->
-            <GridSplitter x:Name="PropsSplitter" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Height="4"
-                          HorizontalAlignment="Stretch" ResizeDirection="Rows" Background="{StaticResource LineBrush}"
-                          Visibility="Collapsed"/>
-            <l:IPropsPanel x:Name="PropsPanel" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Visibility="Collapsed"/>
+            <Border x:Name="PropsSplitter" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Height="1"
+                    Background="{StaticResource LineBrush}" Visibility="Collapsed"/>
+            <l:IPropsPanel x:Name="PropsPanel" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Visibility="Collapsed"
+                           VerticalAlignment="Top"/>
         </Grid>
 
         <!-- Status bar + update notice -->

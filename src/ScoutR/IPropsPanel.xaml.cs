@@ -133,6 +133,7 @@ public partial class IPropsPanel : UserControl
 
         FileText.Text = Path.GetFileName(path);
         InfoText.Text = Loc.Get("IProps_Loading");
+        Thumb.Source = ShellInfo.Thumbnail(path, 256);
         try
         {
             var props = await InventorProps.ReadAsync(path);
