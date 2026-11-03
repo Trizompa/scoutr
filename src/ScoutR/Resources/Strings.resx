@@ -132,6 +132,14 @@
   <data name="NewShortcutDefault" xml:space="preserve"><value>New shortcut</value></data>
   <data name="Msg_PathCopied" xml:space="preserve"><value>Path copied.</value></data>
   <data name="Msg_TargetMissing" xml:space="preserve"><value>The shortcut target does not exist.</value></data>
+  <data name="Ctx_Bom" xml:space="preserve"><value>BOM...</value></data>
+  <data name="Bom_Title" xml:space="preserve"><value>BOM</value></data>
+  <data name="Bom_Export" xml:space="preserve"><value>Export to Excel...</value></data>
+  <data name="Bom_Item" xml:space="preserve"><value>Item</value></data>
+  <data name="Bom_Qty" xml:space="preserve"><value>Qty</value></data>
+  <data name="Bom_File" xml:space="preserve"><value>File</value></data>
+  <data name="Bom_Count" xml:space="preserve"><value>{0} rows (structured, all levels; Phantom and Reference left out)</value></data>
+  <data name="Bom_Exported" xml:space="preserve"><value>Exported: {0}</value></data>
   <data name="Ctx_CopyDesign" xml:space="preserve"><value>Copy design...</value></data>
   <data name="Copy_Title" xml:space="preserve"><value>Copy design</value></data>
   <data name="Copy_Find" xml:space="preserve"><value>Find:</value></data>

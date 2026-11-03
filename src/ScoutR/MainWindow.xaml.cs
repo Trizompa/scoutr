@@ -524,6 +524,8 @@ public partial class MainWindow : Window
                 {
                     menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
                     menu.Items.Add(MenuEntry("Ctx_RenameWithDrawing", null, true, () => _ = RenameAsync(true)));
+                    if (ext.Equals(".iam", StringComparison.OrdinalIgnoreCase))
+                        menu.Items.Add(MenuEntry("Ctx_Bom", null, true, () => new BomWindow(this, first.FullPath, _settings).Show()));
                 }
                 menu.Items.Add(new Separator());
             }

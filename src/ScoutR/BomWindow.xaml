@@ -1,0 +1,31 @@
+<Window x:Class="ScoutR.BomWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:ScoutR"
+        Title="{l:T Bom_Title}" Width="1100" Height="650" MinWidth="600" MinHeight="350"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="White">
+    <DockPanel Margin="14">
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" x:Name="ExportBtn" Content="{l:T Bom_Export}" Padding="12,3"
+                    Click="Export_Click" IsEnabled="False"/>
+            <Button DockPanel.Dock="Right" x:Name="FieldsBtn" Content="{l:T IProps_Fields}" Padding="12,3"
+                    Margin="0,0,8,0" Click="Fields_Click" IsEnabled="False"/>
+            <TextBlock x:Name="FileText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{StaticResource MutedBrush}"/>
+        </DockPanel>
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Right" Content="{l:T IProps_Close}" Width="90" IsCancel="True" Click="Close_Click"/>
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+        <ListView x:Name="BomList" BorderBrush="{StaticResource LineBrush}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Padding" Value="0,3"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.View>
+                <GridView x:Name="BomGrid" AllowsColumnReorder="True"/>
+            </ListView.View>
+        </ListView>
+    </DockPanel>
+</Window>
