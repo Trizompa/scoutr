@@ -126,7 +126,7 @@
   <data name="Tip_CollapseTree" xml:space="preserve"><value>Put the tree back as it was before Show folder</value></data>
   <data name="Ctx_RenameWithDrawing" xml:space="preserve"><value>Rename with drawing...</value></data>
   <data name="Ctx_CopyAsPath" xml:space="preserve"><value>Copy as path</value></data>
-  <data name="Ctx_GoToTarget" xml:space="preserve"><value>Open target folder</value></data>
+  <data name="Ctx_GoToTarget" xml:space="preserve"><value>Open file location</value></data>
   <data name="Ctx_PasteShortcut" xml:space="preserve"><value>Paste shortcut</value></data>
   <data name="Ctx_NewShortcut" xml:space="preserve"><value>Shortcut</value></data>
   <data name="NewShortcutDefault" xml:space="preserve"><value>New shortcut</value></data>
