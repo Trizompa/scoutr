@@ -20,7 +20,7 @@ public sealed class BomLine
 public partial class BomWindow : Window
 {
     public static readonly string[] DefaultColumns =
-        { "#Type", "Part Number", "Revision Number", "#Item", "#Qty", "#TotalQty", "#####_QTY", "Description", "Reference",
+        { "#Type", "Part Number", "Revision Number", "#Item", "#Qty", "#TotalQty", "Description", "Reference",
           "Material", "Thickness", "Laser", "Bend", "Roll", "#Structure", "Vendor", "#Path" };
 
     private readonly string _top;
@@ -80,7 +80,8 @@ public partial class BomWindow : Window
             StatusText.Text = Loc.Get("Msg_Error", ex.Message);
             return;
         }
-        _columns = _settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet.ToList() : DefaultColumns.ToList();
+        _columns = (_settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet.ToList() : DefaultColumns.ToList())
+            .Where(k => k != "#####_QTY").ToList();
         FlatBox.IsChecked = _settings.BomFlat;
         FlatBox.IsEnabled = FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
         ShowRows();
@@ -286,7 +287,8 @@ public partial class BomWindow : Window
         var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
-        all.AddRange(_fields.Where(f => !all.Contains(f, StringComparer.OrdinalIgnoreCase)).OrderBy(f => f));
+        // Custom properties: long names are leftovers (add-ins, imports), not real fields.
+        all.AddRange(_fields.Where(f => f.Length <= 25 && !all.Contains(f, StringComparer.OrdinalIgnoreCase)).OrderBy(f => f));
         foreach (string key in all)
         {
             var item = new MenuItem { Header = Label(key), IsCheckable = true, StaysOpenOnClick = true,
