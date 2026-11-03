@@ -3,7 +3,7 @@ using System.IO;
 namespace ScoutR;
 
 /// <summary>One line of the structured BOM. <see cref="Props"/>: iProperty name → shown text.</summary>
-public sealed record BomRow(string Item, int Level, int Qty, string Path, string Structure,
+public sealed record BomRow(string Item, int Level, int Qty, int TotalQty, string Path, string Structure,
     IReadOnlyDictionary<string, string> Props);
 
 /// <summary>
@@ -24,7 +24,7 @@ public static partial class InventorProps
             object doc = Open(top);
             try
             {
-                Expand(Get(doc, "ComponentDefinition")!, 0, "");
+                Expand(Get(doc, "ComponentDefinition")!, 0, "", 1);
             }
             finally
             {
@@ -32,7 +32,7 @@ public static partial class InventorProps
             }
             return (rows, fields);
 
-            void Expand(object def, int level, string prefix)
+            void Expand(object def, int level, string prefix, int multiplier)
             {
                 // Group the components under this parent: same file (or same virtual part) = one row.
                 var groups = new List<(string Key, object Def, object? Doc, int Structure, int Qty)>();
@@ -42,9 +42,9 @@ public static partial class InventorProps
                 {
                     string item = prefix + (++n).ToString();
                     var props = Props(g.Key, g.Def, g.Doc);
-                    rows.Add(new BomRow(item, level, g.Qty, g.Doc is null ? "" : g.Key, StructureName(g.Structure), props));
+                    rows.Add(new BomRow(item, level, g.Qty, g.Qty * multiplier, g.Doc is null ? "" : g.Key, StructureName(g.Structure), props));
                     if (g.Structure != BomPurchased && Occurrences(g.Def) is not null)
-                        Expand(g.Def, level + 1, item + ".");
+                        Expand(g.Def, level + 1, item + ".", g.Qty * multiplier);
                 }
             }
 

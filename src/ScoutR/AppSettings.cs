@@ -12,7 +12,7 @@ public sealed class AppSettings
     /// <summary>Standard iProperties the user chose not to show (Fields menu of the iProperties panel).</summary>
     public List<string> HiddenIProps { get; set; } = new();
     /// <summary>BOM window columns, in order ("#Item", "#Qty", "#File" or an iProperty name).</summary>
-    public List<string> BomColumnList { get; set; } = new();
+    public List<string> BomColumnSet { get; set; } = new();
 
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ScoutR", "settings.json");

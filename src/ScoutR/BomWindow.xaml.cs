@@ -20,7 +20,7 @@ public sealed class BomLine
 public partial class BomWindow : Window
 {
     public static readonly string[] DefaultColumns =
-        { "#Type", "Part Number", "Revision Number", "#Item", "#Qty", "#####_QTY", "Description", "Reference",
+        { "#Type", "Part Number", "Revision Number", "#Item", "#Qty", "#TotalQty", "#####_QTY", "Description", "Reference",
           "Material", "Thickness", "Laser", "Bend", "Roll", "#Structure", "Vendor", "#Path" };
 
     private readonly string _top;
@@ -45,6 +45,7 @@ public partial class BomWindow : Window
     {
         "#Item" => row.Item,
         "#Qty" => row.Qty.ToString(),
+        "#TotalQty" => row.TotalQty.ToString(),
         "#Structure" => row.Structure,
         "#Path" => row.Path,
         "#Type" => row.Path.Length == 0 ? "Virtual"
@@ -60,6 +61,7 @@ public partial class BomWindow : Window
         "#Type" => "Component Type",
         "#Path" => "File Path",
         "#Qty" => "Item QTY",
+        "#TotalQty" => "Total QTY",
         "#Appearance" => "Appearance",
         "Revision Number" => "REV",
         _ => key,
@@ -78,7 +80,7 @@ public partial class BomWindow : Window
             StatusText.Text = Loc.Get("Msg_Error", ex.Message);
             return;
         }
-        var keys = _settings.BomColumnList.Count > 0 ? _settings.BomColumnList : DefaultColumns.ToList();
+        var keys = _settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet : DefaultColumns.ToList();
         foreach (string k in keys) AddColumn(k);
         BomList.ItemsSource = _rows.Select(r => new BomLine(r)).ToList();
         StatusText.Text = Loc.Get("Bom_Count", _rows.Count);
@@ -87,7 +89,7 @@ public partial class BomWindow : Window
 
     private void AddColumn(string key)
     {
-        var col = new GridViewColumn { Header = Label(key), Width = key switch { "#Item" => 90, "#Qty" or "Revision Number" => 50, "Description" => 260, "Part Number" => 180, "#Path" => 400, "#Type" => 100, _ => 90 } };
+        var col = new GridViewColumn { Header = Label(key), Width = key switch { "#Item" => 90, "#Qty" or "#TotalQty" or "Revision Number" => 70, "Description" => 260, "Part Number" => 180, "#Path" => 400, "#Type" => 100, _ => 90 } };
         if (key == "#Item")
         {
             var tb = new FrameworkElementFactory(typeof(TextBlock));
@@ -108,7 +110,7 @@ public partial class BomWindow : Window
     private void SaveColumns()
     {
         if (BomGrid.Columns.Count == 0) return;
-        _settings.BomColumnList = Shown();
+        _settings.BomColumnSet = Shown();
         _settings.Save();
     }
 
@@ -116,7 +118,7 @@ public partial class BomWindow : Window
     private void Fields_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = FieldsBtn };
-        var all = new List<string> { "#Type", "#Item", "#Qty", "#Structure", "#File", "#Path", "#Appearance" };
+        var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(_fields.Where(f => !all.Contains(f, StringComparer.OrdinalIgnoreCase)).OrderBy(f => f));
@@ -154,6 +156,7 @@ public partial class BomWindow : Window
         {
             "#Item" => new XlsxWriter.Cell(r.Item, r.Level),
             "#Qty" => new XlsxWriter.Cell(r.Qty),
+            "#TotalQty" => new XlsxWriter.Cell(r.TotalQty),
             _ => new XlsxWriter.Cell(Text(r, k)),
         }).ToList()).ToList();
         var widths = BomGrid.Columns.Select(c => Math.Max(6, c.ActualWidth / 7)).ToList();
