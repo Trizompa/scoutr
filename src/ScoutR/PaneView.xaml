@@ -59,19 +59,18 @@
             </Border.Style>
         </Border>
 
-        <!-- Back / Up / address / filter -->
+        <!-- Back / Up / address -->
         <Grid Grid.Row="1" Margin="6,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="130"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Style="{StaticResource NavBtn}" Content="&#xE72B;"
                     ToolTip="{l:T Tip_Back}" Click="Back_Click" IsEnabled="{Binding CanGoBack}"/>
             <Button Grid.Column="1" Style="{StaticResource NavBtn}" Content="&#xE74A;"
                     ToolTip="{l:T Tip_Up}" Click="Up_Click"/>
-            <Border Grid.Column="2" Margin="4,0" BorderThickness="1" Background="White" Height="26"
+            <Border Grid.Column="2" Margin="4,0,0,0" BorderThickness="1" Background="White" Height="26"
                     MouseLeftButtonDown="AddressBorder_MouseDown">
                 <Border.Style>
                     <Style TargetType="Border">
@@ -107,28 +106,6 @@
                              KeyDown="AddressBox_KeyDown" LostKeyboardFocus="AddressBox_LostFocus"/>
                 </Grid>
             </Border>
-            <Grid Grid.Column="3">
-                <TextBox Height="26" VerticalContentAlignment="Center" Padding="4,0,22,0"
-                         BorderBrush="{StaticResource LineBrush}" ToolTip="{l:T Tip_Filter}"
-                         Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"/>
-                <TextBlock Text="{Binding SearchPlaceholder}" Margin="6,0,24,0" VerticalAlignment="Center"
-                           IsHitTestVisible="False" TextTrimming="CharacterEllipsis"
-                           Foreground="{StaticResource MutedBrush}">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Filter}" Value="">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-                <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" Margin="0,0,7,0"
-                           HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False"
-                           Foreground="{StaticResource MutedBrush}"/>
-            </Grid>
         </Grid>
 
         <ListView x:Name="ItemList" Grid.Row="2" BorderThickness="0" SelectionMode="Extended" Foreground="Black"
