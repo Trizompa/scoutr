@@ -445,6 +445,7 @@ public partial class MainWindow : Window
             case Key.C when ctrl && !inText: PutOnClipboard(cut: false); e.Handled = true; break;
             case Key.X when ctrl && !inText: PutOnClipboard(cut: true); e.Handled = true; break;
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
+            case Key.Z when ctrl && !inText: _ = UndoAsync(); e.Handled = true; break;
             case Key.System when e.SystemKey == Key.P:
                 ShowProps(PropsPanel.Visibility != Visibility.Visible);
                 e.Handled = true;
@@ -623,15 +624,18 @@ public partial class MainWindow : Window
         }
     }
 
-    private static (int, string?) TransferAll(IEnumerable<string> sources, string destDir, bool move)
+    private (int, string?) TransferAll(IEnumerable<string> sources, string destDir, bool move)
     {
         int done = 0;
         string? error = null;
+        var steps = new List<UndoStep>();
         foreach (string source in sources)
         {
             try
             {
-                FileOps.Transfer(source, destDir, move);
+                string target = FileOps.Transfer(source, destDir, move);
+                if (!string.Equals(target, source.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase))
+                    steps.Add(move ? new UndoStep.Moved(source.TrimEnd('\\'), target) : new UndoStep.Created(target));
                 done++;
             }
             catch (Exception ex)
@@ -639,6 +643,7 @@ public partial class MainWindow : Window
                 error ??= ex.Message;
             }
         }
+        Dispatcher.Invoke(() => _undo.Push(steps));
         return (done, error);
     }
 
@@ -683,11 +688,13 @@ public partial class MainWindow : Window
         {
             int done = 0;
             string? error = null;
+            var steps = new List<UndoStep>();
             foreach (string p in paths)
             {
                 try
                 {
                     FileOps.Recycle(p);
+                    steps.Add(new UndoStep.Recycled(p.TrimEnd('\\')));
                     done++;
                 }
                 catch (Exception ex)
@@ -695,6 +702,7 @@ public partial class MainWindow : Window
                     error ??= ex.Message;
                 }
             }
+            Dispatcher.Invoke(() => _undo.Push(steps));
             return (done, error);
         }, "Msg_Deleted");
     }
@@ -715,6 +723,7 @@ public partial class MainWindow : Window
         try
         {
             string target = FileOps.Rename(item.FullPath, name);
+            _undo.Push(new UndoStep.Moved(item.FullPath.TrimEnd('\\'), target));
             _a.Reload();
             _b.Reload();
             view.SelectPaths(new[] { target });
@@ -724,6 +733,20 @@ public partial class MainWindow : Window
         {
             Status(Loc.Get("Msg_Error", ex.Message));
         }
+    }
+
+    // ---- Undo (Ctrl+Z) ----
+
+    private readonly UndoStack _undo = new();
+
+    private async Task UndoAsync()
+    {
+        if (!_undo.CanUndo)
+        {
+            Status(Loc.Get("Msg_NothingToUndo"));
+            return;
+        }
+        await RunAsync(() => _undo.UndoLast(), "Msg_Undone");
     }
 
     private void NewFolder() => CreateNew(folder: true);
@@ -750,6 +773,7 @@ public partial class MainWindow : Window
         try
         {
             string target = folder ? FileOps.CreateFolder(dir, name) : FileOps.CreateFile(dir, name);
+            _undo.Push(new UndoStep.Created(target));
             _a.Reload();
             _b.Reload();
             view.SelectPaths(new[] { target });

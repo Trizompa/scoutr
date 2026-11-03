@@ -91,6 +91,32 @@ public static class FileOps
             VbFileSystem.DeleteFile(path, VbUi.OnlyErrorDialogs, VbRecycle.SendToRecycleBin);
     }
 
+    /// <summary>Moves a file or folder to exactly <paramref name="target"/> (used by Ctrl+Z).</summary>
+    public static void MoveExact(string source, string target)
+    {
+        source = Trim(source);
+        target = Trim(target);
+        if (File.Exists(target) || Directory.Exists(target))
+            throw new IOException($"'{Path.GetFileName(target)}' already exists.");
+        Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+        if (Directory.Exists(source))
+        {
+            if (string.Equals(Path.GetPathRoot(source), Path.GetPathRoot(target), StringComparison.OrdinalIgnoreCase))
+            {
+                Directory.Move(source, target);
+            }
+            else
+            {
+                CopyDirectory(source, target);
+                Directory.Delete(source, true);
+            }
+        }
+        else
+        {
+            File.Move(source, target);
+        }
+    }
+
     public static string Rename(string path, string newName)
     {
         path = Trim(path);

@@ -148,4 +148,6 @@ The copies made so far were removed; the originals were not changed.</value></da
 {0}</value></data>
   <data name="Copy_ModelStates" xml:space="preserve"><value>{0} has {1} Model States: Copy design is not possible on models with more than one Model State.</value></data>
   <data name="Copy_PnNotRenamed" xml:space="preserve"><value>• Part Number of {0} not renamed (probably more Model States): rename it in Inventor.</value></data>
+  <data name="Msg_Undone" xml:space="preserve"><value>Undone ({0} item(s))</value></data>
+  <data name="Msg_NothingToUndo" xml:space="preserve"><value>Nothing to undo</value></data>
 </root>
