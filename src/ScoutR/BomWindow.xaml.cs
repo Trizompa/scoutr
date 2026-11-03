@@ -92,8 +92,8 @@ public partial class BomWindow : Window
     private List<BomRow> Current()
     {
         var rows = FlatBox.IsChecked == true ? Flat(_rows) : _rows;
-        // "Frame members only": the tubes, each keeping its item number.
-        return FrameBox.IsChecked == true ? rows.Where(r => r.Props.ContainsKey("#Frame")).Select(r => r with { Level = 0 }).ToList() : rows;
+        // "Hide frame members": the Frame Generator tubes are left out.
+        return FrameBox.IsChecked == true ? rows.Where(r => !r.Props.ContainsKey("#Frame")).ToList() : rows;
     }
 
     private static List<BomRow> Flat(List<BomRow> rows)

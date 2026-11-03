@@ -126,8 +126,7 @@ public static partial class InventorProps
         });
 
     /// <summary>
-    /// Frame Generator member: the part carries Frame Generator's attribute set; if Apprentice can't read
-    /// attributes, the "... - 001.ipt" name Frame Generator gives its members.
+    /// Frame Generator member: the part carries Frame Generator's attribute set (the file name is not used).
     /// </summary>
     private static bool IsFrameMember(object doc, string path)
     {
@@ -142,9 +141,9 @@ public static partial class InventorProps
         }
         catch
         {
-            // attributes not available: fall back on the name
+            // attributes not readable: not recognised
         }
-        return System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileNameWithoutExtension(path), @"\s-\s*\d+$");
+        return false;
     }
 
     private static string StructureName(int s) => s switch
