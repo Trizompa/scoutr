@@ -82,13 +82,18 @@ public sealed class PaneViewModel : ObservableObject
         }
     }
 
-    /// <summary>"This PC", then the drive, then each folder down to the current one.</summary>
+    /// <summary>The drive, then each folder down to the current one.</summary>
     public List<Crumb> Crumbs
     {
         get
         {
-            var list = new List<Crumb> { new(Loc.Get("ThisPC"), "") };
-            if (CurrentPath.Length == 0) return list;
+            // The path starts at the drive; "This PC" only shows while the drive list itself is open.
+            var list = new List<Crumb>();
+            if (CurrentPath.Length == 0)
+            {
+                list.Add(new Crumb(Loc.Get("ThisPC"), ""));
+                return list;
+            }
 
             string root = Path.GetPathRoot(CurrentPath) ?? "";
             if (root.Length == 0) return list;
