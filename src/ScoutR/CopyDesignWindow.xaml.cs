@@ -82,8 +82,6 @@ public partial class CopyDesignWindow : Window
         RootText.Text = _root;
         FindBox.Text = System.IO.Path.GetFileNameWithoutExtension(top);
         ReplaceBox.Text = FindBox.Text;
-        if (!System.IO.Path.GetExtension(top).Equals(".iam", StringComparison.OrdinalIgnoreCase))
-            Title = Loc.Get("Copy_PartTitle");
         Loaded += async (_, _) => await LoadAsync();
     }
 

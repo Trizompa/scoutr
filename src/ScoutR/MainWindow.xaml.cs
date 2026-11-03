@@ -513,13 +513,13 @@ public partial class MainWindow : Window
             menu.Items.Add(MenuEntry("Btn_Rename", "F2", n == 1, Rename));
             menu.Items.Add(new Separator());
             if (sel.Count == 1 && !first.IsDirectory && InventorProps.IsInventorFile(first.FullPath))
+            {
                 menu.Items.Add(MenuEntry("Ctx_IProps", "Alt+P", true, () => ShowProps(true)));
-            if (sel.Count == 1 && !first.IsDirectory &&
-                Path.GetExtension(first.FullPath).Equals(".iam", StringComparison.OrdinalIgnoreCase))
-                menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
-            if (sel.Count == 1 && !first.IsDirectory &&
-                Path.GetExtension(first.FullPath).Equals(".ipt", StringComparison.OrdinalIgnoreCase))
-                menu.Items.Add(MenuEntry("Ctx_CopyPart", null, true, () => CopyDesign(first.FullPath)));
+                string ext = Path.GetExtension(first.FullPath);
+                if (ext.Equals(".iam", StringComparison.OrdinalIgnoreCase) || ext.Equals(".ipt", StringComparison.OrdinalIgnoreCase))
+                    menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
+                menu.Items.Add(new Separator());
+            }
             if (sel.Count == 1 && first.IsDirectory)
             {
                 string f = first.FullPath;
