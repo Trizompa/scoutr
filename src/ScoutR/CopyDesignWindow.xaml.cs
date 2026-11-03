@@ -182,7 +182,9 @@ public partial class CopyDesignWindow : Window
         var progress = new Progress<string>(name => StatusText.Text = Loc.Get("Copy_Working", name));
         try
         {
-            var warnings = await InventorProps.CopyDesignAsync(map, FindBox.Text, ReplaceBox.Text, renamePn, progress);
+            var job = new CopyJob(new Dictionary<string, string>(map, StringComparer.OrdinalIgnoreCase), FindBox.Text,
+                ReplaceBox.Text, renamePn.ToList());
+            var warnings = await job.RunIsolatedAsync(progress);
             if (warnings.Count > 0)
                 MessageBox.Show(this, Loc.Get("Copy_PnWarning", string.Join("\n", warnings)), Title,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
