@@ -80,8 +80,7 @@ public partial class BomWindow : Window
             StatusText.Text = Loc.Get("Msg_Error", ex.Message);
             return;
         }
-        var keys = _settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet : DefaultColumns.ToList();
-        foreach (string k in keys) AddColumn(k);
+        _columns = _settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet.ToList() : DefaultColumns.ToList();
         FlatBox.IsChecked = _settings.BomFlat;
         FlatBox.IsEnabled = FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
         ShowRows();
@@ -176,8 +175,27 @@ public partial class BomWindow : Window
         return x.Length.CompareTo(y.Length);
     }
 
+    // Columns that mean nothing when each file is listed once with its total.
+    private static readonly HashSet<string> FlatHidden = new(StringComparer.OrdinalIgnoreCase)
+        { "#Type", "#Qty", "#####_QTY", "#Structure", "Vendor", "#Path" };
+
+    /// <summary>Columns chosen for the structured view; the flat view shows them minus <see cref="FlatHidden"/>.</summary>
+    private List<string> _columns = new();
+    private bool? _builtFlat;
+
+    private void BuildColumns()
+    {
+        bool flat = FlatBox.IsChecked == true;
+        if (_builtFlat == flat) return;
+        _builtFlat = flat;
+        BomGrid.Columns.Clear();
+        _keys.Clear();
+        foreach (string k in _columns.Where(k => !flat || !FlatHidden.Contains(k))) AddColumn(k);
+    }
+
     private void ShowRows()
     {
+        BuildColumns();
         var rows = Sorted(Current());
         BomList.ItemsSource = rows.Select(r => new BomLine(r)).ToList();
         FitColumns();
@@ -210,6 +228,7 @@ public partial class BomWindow : Window
 
     private void Flat_Click(object sender, RoutedEventArgs e)
     {
+        SaveColumns(); // remember the current view's columns before switching
         _settings.BomFlat = FlatBox.IsChecked == true;
         _settings.Save();
         ShowRows();
@@ -238,7 +257,25 @@ public partial class BomWindow : Window
     private void SaveColumns()
     {
         if (BomGrid.Columns.Count == 0) return;
-        _settings.BomColumnSet = Shown();
+        var shown = Shown();
+        if (_builtFlat == true)
+        {
+            // Flat view: keep the hidden structured-only columns where they were, take the rest as shown.
+            var merged = new List<string>();
+            int next = 0;
+            foreach (string k in _columns)
+            {
+                if (FlatHidden.Contains(k)) merged.Add(k);
+                else if (shown.Contains(k)) { while (next < shown.Count && merged.Contains(shown[next])) next++; if (next < shown.Count) merged.Add(shown[next++]); }
+            }
+            merged.AddRange(shown.Where(k => !merged.Contains(k)));
+            _columns = merged;
+        }
+        else
+        {
+            _columns = shown;
+        }
+        _settings.BomColumnSet = _columns.ToList();
         _settings.Save();
     }
 
