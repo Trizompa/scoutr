@@ -180,17 +180,31 @@ public partial class BomWindow : Window
     {
         var rows = Sorted(Current());
         BomList.ItemsSource = rows.Select(r => new BomLine(r)).ToList();
-        Dispatcher.BeginInvoke(FitColumns, System.Windows.Threading.DispatcherPriority.ContextIdle);
+        FitColumns();
         StatusText.Text = Loc.Get(FlatBox.IsChecked == true ? "Bom_CountFlat" : "Bom_Count", rows.Count);
     }
 
-    /// <summary>Auto-fit every column to its header and the rows shown.</summary>
+    /// <summary>
+    /// Auto-fit every column to its header and all rows (measured as text, so rows not on screen count too).
+    /// </summary>
     private void FitColumns()
     {
+        if (BomList.ItemsSource is not List<BomLine> lines) return;
+        var face = new System.Windows.Media.Typeface(BomList.FontFamily, BomList.FontStyle, BomList.FontWeight, BomList.FontStretch);
+        double dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        double Measure(string text, bool bold = false) => text.Length == 0 ? 0 :
+            new System.Windows.Media.FormattedText(text, System.Globalization.CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                bold ? new System.Windows.Media.Typeface(face.FontFamily, face.Style, FontWeights.SemiBold, face.Stretch) : face,
+                BomList.FontSize, System.Windows.Media.Brushes.Black, dpi).WidthIncludingTrailingWhitespace;
+
         foreach (var col in BomGrid.Columns)
         {
-            col.Width = col.ActualWidth;
-            col.Width = double.NaN;
+            string key = _keys[col];
+            double w = Measure(Label(key) + " ▼", bold: true);
+            foreach (var line in lines)
+                w = Math.Max(w, Measure(line[key]) + (key == "#Item" ? line.Row.Level * 16 : 0));
+            col.Width = Math.Min(600, Math.Ceiling(w) + 24);
         }
     }
 
@@ -242,7 +256,7 @@ public partial class BomWindow : Window
                                       IsChecked = _keys.ContainsValue(key) };
             item.Click += (_, _) =>
             {
-                if (item.IsChecked) { AddColumn(key); Dispatcher.BeginInvoke(FitColumns, System.Windows.Threading.DispatcherPriority.ContextIdle); }
+                if (item.IsChecked) { AddColumn(key); FitColumns(); }
                 else if (_keys.FirstOrDefault(p => p.Value == key).Key is { } col)
                 {
                     BomGrid.Columns.Remove(col);
