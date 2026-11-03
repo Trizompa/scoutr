@@ -156,17 +156,12 @@ public partial class BomWindow : Window
         if (key == "#Item") return CompareItems(a.Item, b.Item);
         if (key is "#Qty") return a.Qty.CompareTo(b.Qty);
         if (key is "#TotalQty") return a.TotalQty.CompareTo(b.TotalQty);
-        string x = Text(a, key), y = Text(b, key);
-        if (double.TryParse(Number(x), out double nx) && double.TryParse(Number(y), out double ny)) return nx.CompareTo(ny);
-        return string.Compare(x, y, StringComparison.CurrentCultureIgnoreCase);
+        // Same order as Explorer: digits compared as numbers ("9" < "10", "12x145" < "49259").
+        return StrCmpLogicalW(Text(a, key), Text(b, key));
     }
 
-    // "1.53 kg" → "1.53": numbers with a unit still sort as numbers.
-    private static string Number(string s)
-    {
-        int sp = s.IndexOf(' ');
-        return sp > 0 ? s[..sp] : s;
-    }
+    [System.Runtime.InteropServices.DllImport("shlwapi.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+    private static extern int StrCmpLogicalW(string x, string y);
 
     private static int CompareItems(string a, string b)
     {
