@@ -63,6 +63,7 @@ public partial class BomWindow : Window
         "#Qty" => "Item QTY",
         "#TotalQty" => "Total QTY",
         "#Appearance" => "Appearance",
+        "#Frame" => "Frame Member",
         "Revision Number" => "REV",
         _ => key,
     };
@@ -83,12 +84,17 @@ public partial class BomWindow : Window
         _columns = (_settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet.ToList() : DefaultColumns.ToList())
             .Where(k => k != "#####_QTY").ToList();
         FlatBox.IsChecked = _settings.BomFlat;
-        FlatBox.IsEnabled = FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
+        FrameBox.IsEnabled = FlatBox.IsEnabled = FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
         ShowRows();
     }
 
     /// <summary>Rows on screen: the structure, or each file once with its total quantity.</summary>
-    private List<BomRow> Current() => FlatBox.IsChecked == true ? Flat(_rows) : _rows;
+    private List<BomRow> Current()
+    {
+        var rows = FlatBox.IsChecked == true ? Flat(_rows) : _rows;
+        // "Frame members only": the tubes, each keeping its item number.
+        return FrameBox.IsChecked == true ? rows.Where(r => r.Props.ContainsKey("#Frame")).Select(r => r with { Level = 0 }).ToList() : rows;
+    }
 
     private static List<BomRow> Flat(List<BomRow> rows)
     {
@@ -227,6 +233,8 @@ public partial class BomWindow : Window
         }
     }
 
+    private void Frame_Click(object sender, RoutedEventArgs e) => ShowRows();
+
     private void Flat_Click(object sender, RoutedEventArgs e)
     {
         SaveColumns(); // remember the current view's columns before switching
@@ -284,7 +292,7 @@ public partial class BomWindow : Window
     private void Fields_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = FieldsBtn, MaxHeight = Math.Max(300, ActualHeight - 80) };
-        var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Structure", "#File", "#Path", "#Appearance" };
+        var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Frame", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         // Custom properties: long names are leftovers (add-ins, imports), not real fields.

@@ -112,6 +112,7 @@ public static partial class InventorProps
                 if (cdoc is not null)
                 {
                     props["#File"] = Path.GetFileName(key);
+                    if (IsFrameMember(cdoc, key)) props["#Frame"] = "Yes";
                     try
                     {
                         if (Get(cdoc, "ActiveAppearance") is { } app && Get(app, "DisplayName") is string a)
@@ -123,6 +124,28 @@ public static partial class InventorProps
                 return props;
             }
         });
+
+    /// <summary>
+    /// Frame Generator member: the part carries Frame Generator's attribute set; if Apprentice can't read
+    /// attributes, the "... - 001.ipt" name Frame Generator gives its members.
+    /// </summary>
+    private static bool IsFrameMember(object doc, string path)
+    {
+        if (!Path.GetExtension(path).Equals(".ipt", StringComparison.OrdinalIgnoreCase)) return false;
+        try
+        {
+            foreach (object set in Items(Get(doc, "AttributeSets")!))
+                if (Get(set, "Name") is string n &&
+                    (n.Contains("com.autodesk.FG", StringComparison.OrdinalIgnoreCase) ||
+                     n.Contains("FrameMember", StringComparison.OrdinalIgnoreCase)))
+                    return true;
+        }
+        catch
+        {
+            // attributes not available: fall back on the name
+        }
+        return System.Text.RegularExpressions.Regex.IsMatch(Path.GetFileNameWithoutExtension(path), @"\s-\s*\d+$");
+    }
 
     private static string StructureName(int s) => s switch
     {

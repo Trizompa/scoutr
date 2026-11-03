@@ -139,6 +139,7 @@
   <data name="Bom_Qty" xml:space="preserve"><value>Qty</value></data>
   <data name="Bom_File" xml:space="preserve"><value>File</value></data>
   <data name="Bom_Count" xml:space="preserve"><value>{0} rows (structured, all levels; Phantom and Reference left out)</value></data>
+  <data name="Bom_FrameOnly" xml:space="preserve"><value>Frame members only</value></data>
   <data name="Bom_Flat" xml:space="preserve"><value>Each file once (total quantities)</value></data>
   <data name="Bom_CountFlat" xml:space="preserve"><value>{0} files, each once with its total quantity (assemblies included)</value></data>
   <data name="Bom_Exported" xml:space="preserve"><value>Exported: {0}</value></data>
