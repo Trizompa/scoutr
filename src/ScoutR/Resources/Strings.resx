@@ -146,4 +146,5 @@ The copies made so far were removed; the originals were not changed.</value></da
   <data name="Copy_PnWarning" xml:space="preserve"><value>The files were copied and re-linked, but the Part Number could not be renamed in:
 
 {0}</value></data>
+  <data name="Copy_ModelStates" xml:space="preserve"><value>{0} has {1} Model States: Copy design is not possible on models with more than one Model State.</value></data>
 </root>

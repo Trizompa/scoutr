@@ -43,12 +43,7 @@ public static partial class InventorProps
     private static readonly StaWorker Worker = new();
     private static object? _app;
 
-    // A Copy design (or similar batch job) runs on its own Apprentice instance, created for the job and
-    // released after it: documents it loads (the originals, then the copies, which share their internal
-    // ids) never mix with the ones held by the iProperties panel or by an earlier job.
-    private static object? _scoped;
-
-    private static object App() => _scoped ?? (_app ??= CreateApprentice());
+    private static object App() => _app ??= CreateApprentice();
 
     private static object CreateApprentice()
     {
@@ -68,26 +63,6 @@ public static partial class InventorProps
         }
         throw new InvalidOperationException(Loc.Get("IProps_NoApprentice") +
                                             (last is null ? "" : $" ({last.Message})"));
-    }
-
-    /// <summary>Runs <paramref name="work"/> (on the worker thread) with a fresh Apprentice, then releases it.</summary>
-    private static T WithFreshApprentice<T>(Func<T> work)
-    {
-        object app = CreateApprentice();
-        var previous = _scoped;
-        _scoped = app;
-        try
-        {
-            return work();
-        }
-        finally
-        {
-            _scoped = previous;
-            try { Call(app, "Close"); } catch { /* closes every document it still holds */ }
-            try { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(app); } catch { }
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-        }
     }
 
     // Plain IDispatch calls (late binding). Inventor's collections don't support "foreach" over COM,

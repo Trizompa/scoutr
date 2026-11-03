@@ -3,7 +3,7 @@ using System.IO;
 namespace ScoutR;
 
 /// <summary>One file used by the assembly being copied (found by walking its references).</summary>
-public sealed record DesignFile(string Path, bool Missing, int Depth, bool IsDrawing = false);
+public sealed record DesignFile(string Path, bool Missing, int Depth, bool IsDrawing = false, int ModelStates = 1);
 
 /// <summary>
 /// "Copy design": copies an assembly with the files it uses (Frame Generator sketch, skeleton, frame
@@ -13,20 +13,25 @@ public sealed record DesignFile(string Path, bool Missing, int Depth, bool IsDra
 public static partial class InventorProps
 {
     /// <summary>The top file and every file it uses, directly or through sub-assemblies, each once.</summary>
-    public static Task<List<DesignFile>> CollectAsync(string top) => Worker.Run(() => WithFreshApprentice(() =>
+    public static Task<List<DesignFile>> CollectAsync(string top) => Worker.Run(() =>
     {
         var list = new List<DesignFile> { new(top, false, 0) };
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { top };
+        var states = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         object doc = Open(top);
         try
         {
             Walk(Get(doc, "File")!, 1);
+            // Model States of the top and of every part / sub-assembly it loads.
+            states[top] = ModelStateCount(doc);
+            foreach (object d in Items(Get(doc, "AllReferencedDocuments")!))
+                if (Get(d, "FullFileName") is string p) states[p] = ModelStateCount(d);
         }
         finally
         {
             Close(doc);
         }
-        return list;
+        return list.Select(f => states.TryGetValue(f.Path, out int n) ? f with { ModelStates = n } : f).ToList();
 
         void Walk(object file, int depth)
         {
@@ -45,7 +50,24 @@ public static partial class InventorProps
                 catch { /* unreadable reference: listed, not followed */ }
             }
         }
-    }));
+    });
+
+    /// <summary>
+    /// How many Model States a part or assembly has (1 = only [Primary]). Apprentice can't edit the
+    /// iProperties of a file with more, so Copy design refuses them.
+    /// </summary>
+    private static int ModelStateCount(object doc)
+    {
+        try
+        {
+            object def = Get(doc, "ComponentDefinition")!;
+            return Math.Max(1, Convert.ToInt32(Get(Get(def, "ModelStates")!, "Count")));
+        }
+        catch
+        {
+            return 1; // drawings, older Inventor versions: no Model States
+        }
+    }
 
     private static bool IsLinkable(string path) =>
         IsInventorFile(path) || Path.GetExtension(path).Equals(".dwg", StringComparison.OrdinalIgnoreCase);
@@ -56,7 +78,7 @@ public static partial class InventorProps
     /// Inventor's "OldVersions" backups are skipped; files Apprentice can't open (AutoCAD .dwg) too.
     /// </summary>
     public static Task<List<DesignFile>> FindDrawingsAsync(string root, IReadOnlyCollection<string> models,
-        IProgress<string> progress) => Worker.Run(() => WithFreshApprentice(() =>
+        IProgress<string> progress) => Worker.Run(() =>
     {
         var wanted = new HashSet<string>(models, StringComparer.OrdinalIgnoreCase);
         var found = new List<DesignFile>();
@@ -95,7 +117,7 @@ public static partial class InventorProps
             }
         }
         return found;
-    }));
+    });
 
     /// <summary>
     /// Copies the files (old path → new path), then rewrites the references inside each copy so that it
@@ -145,84 +167,57 @@ public static partial class InventorProps
             if ((attr & FileAttributes.ReadOnly) != 0) File.SetAttributes(to, attr & ~FileAttributes.ReadOnly);
         }
 
-        // 2. Part Numbers first, on a fresh Apprentice, while the copies are untouched: once a drawing has
-        //    been re-linked and saved, Apprentice refuses property edits on the part it shows (E_FAIL).
-        //    Parts first, then assemblies, then drawings.
-        step = "Part Number";
-        var warnings = new List<string>();
-        var refused = new List<(string Path, string Why)>();
-        WithFreshApprentice(() =>
-        {
-            foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p))
-                         .OrderBy(LinkOrder))
-            {
-                file = Path.GetFileName(to);
-                progress.Report(file);
-                try
-                {
-                    RenamePartNumber(to, find, replace);
-                }
-                catch (Exception ex)
-                {
-                    refused.Add((to, ex.Message));
-                }
-            }
-            return true;
-        });
-
-        // Some files refuse the edit through Apprentice (E_FAIL): once Apprentice has let go of them,
-        // write the property straight into the file. Only if that fails too is it reported; the copy stays.
-        foreach (var (to, why) in refused)
+        // 2. Re-link each copy: parts first, assemblies after, drawings last (a copy keeps the original's
+        //    internal id, which is what lets ReplaceReference accept it).
+        step = "re-link";
+        foreach (string to in map.Values.Where(IsLinkable).OrderBy(LinkOrder))
         {
             file = Path.GetFileName(to);
+            progress.Report(file);
+            object doc = Open(to);
             try
             {
-                RenamePartNumberInFile(to, find, replace);
+                bool refs = false;
+                foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!).ToList())
+                {
+                    string path = Get(d, "FullFileName") as string ?? "";
+                    if (map.TryGetValue(path, out string? target))
+                    {
+                        Call(d, "ReplaceReference", target);
+                        refs = true;
+                    }
+                }
+
+                if (refs)
+                {
+                    object save = Get(App(), "FileSaveAs")!;
+                    Call(save, "AddFileToSave", doc, to);
+                    Call(save, "ExecuteSave");
+                }
+            }
+            finally
+            {
+                Close(doc);
+            }
+        }
+
+        // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
+        //    A failure here is reported, the copy itself stays.
+        step = "Part Number";
+        var warnings = new List<string>();
+        foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)).OrderBy(LinkOrder))
+        {
+            file = Path.GetFileName(to);
+            progress.Report(file);
+            try
+            {
+                RenamePartNumber(to, find, replace);
             }
             catch (Exception ex)
             {
-                warnings.Add($"{file}: {why} / {ex.Message}");
+                warnings.Add($"{file}: {ex.Message}");
             }
         }
-        // 3. Re-link each copy, on a fresh Apprentice (a copy keeps the original's internal id, which is
-        //    what lets ReplaceReference accept it).
-        step = "re-link";
-        WithFreshApprentice(() =>
-        {
-            foreach (string to in map.Values.Where(IsLinkable)
-                         .OrderBy(LinkOrder))
-            {
-                file = Path.GetFileName(to);
-                progress.Report(file);
-                object doc = Open(to);
-                try
-                {
-                    bool refs = false;
-                    foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!).ToList())
-                    {
-                        string path = Get(d, "FullFileName") as string ?? "";
-                        if (map.TryGetValue(path, out string? target))
-                        {
-                            Call(d, "ReplaceReference", target);
-                            refs = true;
-                        }
-                    }
-
-                    if (refs)
-                    {
-                        object save = Get(App(), "FileSaveAs")!;
-                        Call(save, "AddFileToSave", doc, to);
-                        Call(save, "ExecuteSave");
-                    }
-                }
-                finally
-                {
-                    Close(doc);
-                }
-            }
-            return true;
-        });
-
 
         return warnings;
         }
@@ -237,16 +232,6 @@ public static partial class InventorProps
     {
         ".ipt" => 0, ".iam" => 1, _ => 2,
     };
-
-    /// <summary>Same as <see cref="RenamePartNumber"/>, written straight into the file's OLE property set.</summary>
-    private static void RenamePartNumberInFile(string path, string find, string replace)
-    {
-        if (find.Length == 0) return;
-        string? value = OleProps.Read(path, OleProps.DesignTracking, OleProps.PartNumberId);
-        if (value is null || value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return;
-        OleProps.Write(path, OleProps.DesignTracking, OleProps.PartNumberId,
-            value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
-    }
 
     /// <summary>Renames the Part Number of a copy (find → replace), if it contains the find text.</summary>
     private static void RenamePartNumber(string path, string find, string replace)

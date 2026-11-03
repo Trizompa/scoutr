@@ -17,6 +17,7 @@ public sealed class DesignRow : ObservableObject
         Path = file.Path;
         Missing = file.Missing;
         IsDrawing = file.IsDrawing;
+        ModelStates = file.ModelStates;
         Indent = new Thickness(file.Depth * 16, 0, 0, 0);
         // Copied by default: what lives next to the top assembly or in its folders (sketch, frame,
         // skeleton, members). Reused: Content Center, libraries, anything elsewhere, missing files.
@@ -43,6 +44,7 @@ public sealed class DesignRow : ObservableObject
     public bool CanCopy => !Missing;
     public bool CanRenamePn => _copy && (InventorProps.IsInventorFile(Path) || IsDrawing);
     public bool IsDrawing { get; }
+    public int ModelStates { get; }
 
     public bool Copy
     {
@@ -154,7 +156,12 @@ public partial class CopyDesignWindow : Window
             r.NewName = newRel;
 
             string? issue = null;
-            if (string.Equals(newRel, rel, StringComparison.OrdinalIgnoreCase)) issue = Loc.Get("Copy_SameName");
+            if (r.ModelStates > 1)
+            {
+                issue = Loc.Get("Copy_ModelStates", System.IO.Path.GetFileName(r.Path), r.ModelStates);
+                r.NewName = issue;
+            }
+            else if (string.Equals(newRel, rel, StringComparison.OrdinalIgnoreCase)) issue = Loc.Get("Copy_SameName");
             else if (File.Exists(r.NewPath)) issue = Loc.Get("Copy_Exists", newRel);
             else if (!targets.Add(r.NewPath)) issue = Loc.Get("Copy_Duplicate", newRel);
             if (issue is not null)
@@ -182,9 +189,7 @@ public partial class CopyDesignWindow : Window
         var progress = new Progress<string>(name => StatusText.Text = Loc.Get("Copy_Working", name));
         try
         {
-            var job = new CopyJob(new Dictionary<string, string>(map, StringComparer.OrdinalIgnoreCase), FindBox.Text,
-                ReplaceBox.Text, renamePn.ToList());
-            var warnings = await job.RunIsolatedAsync(progress);
+            var warnings = await InventorProps.CopyDesignAsync(map, FindBox.Text, ReplaceBox.Text, renamePn, progress);
             if (warnings.Count > 0)
                 MessageBox.Show(this, Loc.Get("Copy_PnWarning", string.Join("\n", warnings)), Title,
                     MessageBoxButton.OK, MessageBoxImage.Warning);
