@@ -13,7 +13,7 @@ public sealed record DesignFile(string Path, bool Missing, int Depth, bool IsDra
 public static partial class InventorProps
 {
     /// <summary>The top file and every file it uses, directly or through sub-assemblies, each once.</summary>
-    public static Task<List<DesignFile>> CollectAsync(string top) => Worker.Run(() =>
+    public static Task<List<DesignFile>> CollectAsync(string top) => Worker.Run(() => WithFreshApprentice(() =>
     {
         var list = new List<DesignFile> { new(top, false, 0) };
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { top };
@@ -45,7 +45,7 @@ public static partial class InventorProps
                 catch { /* unreadable reference: listed, not followed */ }
             }
         }
-    });
+    }));
 
     private static bool IsLinkable(string path) =>
         IsInventorFile(path) || Path.GetExtension(path).Equals(".dwg", StringComparison.OrdinalIgnoreCase);
@@ -56,7 +56,7 @@ public static partial class InventorProps
     /// Inventor's "OldVersions" backups are skipped; files Apprentice can't open (AutoCAD .dwg) too.
     /// </summary>
     public static Task<List<DesignFile>> FindDrawingsAsync(string root, IReadOnlyCollection<string> models,
-        IProgress<string> progress) => Worker.Run(() =>
+        IProgress<string> progress) => Worker.Run(() => WithFreshApprentice(() =>
     {
         var wanted = new HashSet<string>(models, StringComparer.OrdinalIgnoreCase);
         var found = new List<DesignFile>();
@@ -95,7 +95,7 @@ public static partial class InventorProps
             }
         }
         return found;
-    });
+    }));
 
     /// <summary>
     /// Copies the files (old path → new path), then rewrites the references inside each copy so that it
@@ -145,63 +145,69 @@ public static partial class InventorProps
             if ((attr & FileAttributes.ReadOnly) != 0) File.SetAttributes(to, attr & ~FileAttributes.ReadOnly);
         }
 
-        // 2. Part Numbers, on the fresh copies before anything else loads them (a file already held by
-        //    an assembly or drawing refuses property edits). The re-link save keeps what is on disk.
-        step = "Part Number";
-        var warnings = new List<string>();
-        foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
-        {
-            file = Path.GetFileName(to);
-            progress.Report(file);
-            try
-            {
-                RenamePartNumber(to, find, replace);
-            }
-            catch (Exception ex)
-            {
-                // The copy itself is fine: report the Part Number, don't undo everything for it.
-                warnings.Add($"{file}: {ex.Message}");
-            }
-        }
-        // 3. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
-        //    which is what lets ReplaceReference accept it).
-        int relinked = 0;
+        // 2. Re-link each copy, on a fresh Apprentice (a copy keeps the original's internal id, which is
+        //    what lets ReplaceReference accept it).
         step = "re-link";
-        foreach (string to in map.Values.Where(IsLinkable)
-                     .OrderBy(p => Path.GetExtension(p).ToLowerInvariant() switch
-                     {
-                         ".ipt" => 0, ".iam" => 1, _ => 2, // drawings last
-                     }))
+        WithFreshApprentice(() =>
         {
-            file = Path.GetFileName(to);
-            progress.Report(file);
-            object doc = Open(to);
-            try
+            foreach (string to in map.Values.Where(IsLinkable)
+                         .OrderBy(LinkOrder))
             {
-                bool refs = false;
-                foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!).ToList())
+                file = Path.GetFileName(to);
+                progress.Report(file);
+                object doc = Open(to);
+                try
                 {
-                    string path = Get(d, "FullFileName") as string ?? "";
-                    if (map.TryGetValue(path, out string? target))
+                    bool refs = false;
+                    foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!).ToList())
                     {
-                        Call(d, "ReplaceReference", target);
-                        refs = true;
+                        string path = Get(d, "FullFileName") as string ?? "";
+                        if (map.TryGetValue(path, out string? target))
+                        {
+                            Call(d, "ReplaceReference", target);
+                            refs = true;
+                        }
+                    }
+
+                    if (refs)
+                    {
+                        object save = Get(App(), "FileSaveAs")!;
+                        Call(save, "AddFileToSave", doc, to);
+                        Call(save, "ExecuteSave");
                     }
                 }
-
-                if (refs)
+                finally
                 {
-                    object save = Get(App(), "FileSaveAs")!;
-                    Call(save, "AddFileToSave", doc, to);
-                    Call(save, "ExecuteSave");
-                    relinked++;
+                    Close(doc);
                 }
             }
-            finally
+            return true;
+        });
+
+        // 3. Part Numbers, on another fresh Apprentice: now every copy uses only copies, so nothing loads
+        //    an original (which shares its internal id with the copy and makes Apprentice refuse edits).
+        //    Parts first, then assemblies, then drawings: each is opened as a top document when possible.
+        step = "Part Number";
+        var warnings = new List<string>();
+        WithFreshApprentice(() =>
+        {
+            foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p))
+                         .OrderBy(LinkOrder))
             {
-                Close(doc);
+                file = Path.GetFileName(to);
+                progress.Report(file);
+                try
+                {
+                    RenamePartNumber(to, find, replace);
+                }
+                catch (Exception ex)
+                {
+                    // The copy itself is fine: report the Part Number, don't undo everything for it.
+                    warnings.Add($"{file}: {ex.Message}");
+                }
             }
-        }
+            return true;
+        });
         return warnings;
         }
         catch (Exception ex)
@@ -210,35 +216,16 @@ public static partial class InventorProps
         }
     }
 
-    /// <summary>
-    /// Renames the Part Number of a fresh copy (find → replace). Written straight into the file's property
-    /// set, which works on every Inventor file; Apprentice is the fallback for files that aren't OLE files.
-    /// </summary>
+    // Parts first, assemblies after, drawings last.
+    private static int LinkOrder(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".ipt" => 0, ".iam" => 1, _ => 2,
+    };
+
+    /// <summary>Renames the Part Number of a copy (find → replace), if it contains the find text.</summary>
     private static void RenamePartNumber(string path, string find, string replace)
     {
         if (find.Length == 0) return;
-        string? value;
-        try
-        {
-            value = OleProps.Read(path, OleProps.DesignTracking, OleProps.PartNumberId);
-        }
-        catch
-        {
-            RenamePartNumberApprentice(path, find, replace);
-            return;
-        }
-        if (value is null)
-        {
-            RenamePartNumberApprentice(path, find, replace);
-            return;
-        }
-        if (value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return;
-        OleProps.Write(path, OleProps.DesignTracking, OleProps.PartNumberId,
-            value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static void RenamePartNumberApprentice(string path, string find, string replace)
-    {
         object doc = Open(path);
         try
         {

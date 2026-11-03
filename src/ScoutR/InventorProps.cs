@@ -43,29 +43,51 @@ public static partial class InventorProps
     private static readonly StaWorker Worker = new();
     private static object? _app;
 
-    private static object App()
+    // A Copy design (or similar batch job) runs on its own Apprentice instance, created for the job and
+    // released after it: documents it loads (the originals, then the copies, which share their internal
+    // ids) never mix with the ones held by the iProperties panel or by an earlier job.
+    private static object? _scoped;
+
+    private static object App() => _scoped ?? (_app ??= CreateApprentice());
+
+    private static object CreateApprentice()
     {
-        if (_app is null)
+        // The class id is the same in every Inventor version; the ProgIDs vary, so they are only a fallback.
+        var types = new[]
         {
-            // The class id is the same in every Inventor version; the ProgIDs vary, so they are only a fallback.
-            var types = new[]
-            {
-                Type.GetTypeFromCLSID(ApprenticeClsid, throwOnError: false),
-                Type.GetTypeFromProgID(ProgId),
-                Type.GetTypeFromProgID("Inventor.ApprenticeServer"),
-            };
-            Exception? last = null;
-            foreach (var type in types)
-            {
-                if (type is null) continue;
-                try { _app = Activator.CreateInstance(type)!; break; }
-                catch (Exception ex) { last = ex; } // e.g. "class not registered": try the next one
-            }
-            if (_app is null)
-                throw new InvalidOperationException(Loc.Get("IProps_NoApprentice") +
-                                                    (last is null ? "" : $" ({last.Message})"));
+            Type.GetTypeFromCLSID(ApprenticeClsid, throwOnError: false),
+            Type.GetTypeFromProgID(ProgId),
+            Type.GetTypeFromProgID("Inventor.ApprenticeServer"),
+        };
+        Exception? last = null;
+        foreach (var type in types)
+        {
+            if (type is null) continue;
+            try { return Activator.CreateInstance(type)!; }
+            catch (Exception ex) { last = ex; } // e.g. "class not registered": try the next one
         }
-        return _app;
+        throw new InvalidOperationException(Loc.Get("IProps_NoApprentice") +
+                                            (last is null ? "" : $" ({last.Message})"));
+    }
+
+    /// <summary>Runs <paramref name="work"/> (on the worker thread) with a fresh Apprentice, then releases it.</summary>
+    private static T WithFreshApprentice<T>(Func<T> work)
+    {
+        object app = CreateApprentice();
+        var previous = _scoped;
+        _scoped = app;
+        try
+        {
+            return work();
+        }
+        finally
+        {
+            _scoped = previous;
+            try { Call(app, "Close"); } catch { /* closes every document it still holds */ }
+            try { System.Runtime.InteropServices.Marshal.FinalReleaseComObject(app); } catch { }
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
     }
 
     // Plain IDispatch calls (late binding). Inventor's collections don't support "foreach" over COM,
