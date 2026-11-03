@@ -283,7 +283,7 @@ public partial class BomWindow : Window
     /// <summary>Menu with a tick per field: Item, Qty, File, then every iProperty found in the BOM.</summary>
     private void Fields_Click(object sender, RoutedEventArgs e)
     {
-        var menu = new ContextMenu { PlacementTarget = FieldsBtn };
+        var menu = new ContextMenu { PlacementTarget = FieldsBtn, MaxHeight = Math.Max(300, ActualHeight - 80) };
         var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));

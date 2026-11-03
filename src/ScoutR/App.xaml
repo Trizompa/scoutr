@@ -288,7 +288,11 @@
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="14" ShadowDepth="3" Direction="270" Opacity="0.18"/>
                             </Border.Effect>
-                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            <!-- Long menus (BOM Fields) scroll instead of running off the screen. -->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                                          CanContentScroll="False" Focusable="False">
+                                <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </ScrollViewer>
                         </Border>
                     </ControlTemplate>
                 </Setter.Value>
