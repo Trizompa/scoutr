@@ -185,7 +185,18 @@ public partial class BomWindow : Window
     {
         var rows = Sorted(Current());
         BomList.ItemsSource = rows.Select(r => new BomLine(r)).ToList();
+        Dispatcher.BeginInvoke(FitColumns, System.Windows.Threading.DispatcherPriority.ContextIdle);
         StatusText.Text = Loc.Get(FlatBox.IsChecked == true ? "Bom_CountFlat" : "Bom_Count", rows.Count);
+    }
+
+    /// <summary>Auto-fit every column to its header and the rows shown.</summary>
+    private void FitColumns()
+    {
+        foreach (var col in BomGrid.Columns)
+        {
+            col.Width = col.ActualWidth;
+            col.Width = double.NaN;
+        }
     }
 
     private void Flat_Click(object sender, RoutedEventArgs e)
@@ -197,7 +208,7 @@ public partial class BomWindow : Window
 
     private void AddColumn(string key)
     {
-        var col = new GridViewColumn { Header = Label(key), Width = key switch { "#Item" => 90, "#Qty" or "#TotalQty" or "Revision Number" => 70, "Description" => 260, "Part Number" => 180, "#Path" => 400, "#Type" => 100, _ => 90 } };
+        var col = new GridViewColumn { Header = Label(key), Width = double.NaN }; // auto-fit to the content
         if (key == "#Item")
         {
             var tb = new FrameworkElementFactory(typeof(TextBlock));
@@ -236,7 +247,7 @@ public partial class BomWindow : Window
                                       IsChecked = _keys.ContainsValue(key) };
             item.Click += (_, _) =>
             {
-                if (item.IsChecked) AddColumn(key);
+                if (item.IsChecked) { AddColumn(key); Dispatcher.BeginInvoke(FitColumns, System.Windows.Threading.DispatcherPriority.ContextIdle); }
                 else if (_keys.FirstOrDefault(p => p.Value == key).Key is { } col)
                 {
                     BomGrid.Columns.Remove(col);
