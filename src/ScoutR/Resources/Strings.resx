@@ -143,9 +143,9 @@ The copies made so far were removed; the originals were not changed.</value></da
   <data name="Copy_SearchingDrawings" xml:space="preserve"><value>Looking for drawings: {0}</value></data>
   <data name="Ctx_CopyPart" xml:space="preserve"><value>Copy part...</value></data>
   <data name="Copy_PartTitle" xml:space="preserve"><value>Copy part</value></data>
-  <data name="Copy_PnWarning" xml:space="preserve"><value>The files were copied and re-linked, but the Part Number could not be renamed in:
+  <data name="Copy_PnWarning" xml:space="preserve"><value>The files were copied and re-linked, but:
 
 {0}</value></data>
   <data name="Copy_ModelStates" xml:space="preserve"><value>{0} has {1} Model States: Copy design is not possible on models with more than one Model State.</value></data>
-  <data name="Copy_StartingInventor" xml:space="preserve"><value>Starting Inventor for the Part Numbers...</value></data>
+  <data name="Copy_PnNotRenamed" xml:space="preserve"><value>{0}: Part Number not renamed (file with more Model States?) — rename it in Inventor.</value></data>
 </root>
