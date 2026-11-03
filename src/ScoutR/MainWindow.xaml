@@ -28,7 +28,7 @@
                 </Button>
                 <StackPanel Orientation="Horizontal" Margin="6,2,0,0">
                     <Border Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1,1,1,0" Padding="16,4,16,5" Margin="0,0,0,-1">
+                            BorderThickness="1,1,1,0" CornerRadius="6,6,0,0" Padding="16,4,16,5" Margin="0,0,0,-1">
                         <TextBlock Text="{l:T Tab_Home}" Foreground="{StaticResource AccentBrush}"/>
                     </Border>
                 </StackPanel>
