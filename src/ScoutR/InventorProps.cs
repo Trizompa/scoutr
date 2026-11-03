@@ -71,13 +71,27 @@ public static partial class InventorProps
     // Plain IDispatch calls (late binding). Inventor's collections don't support "foreach" over COM,
     // so they are walked with Count / Item(i), 1-based.
     private static object? Get(object o, string name, params object[] args) =>
-        o.GetType().InvokeMember(name, BindingFlags.GetProperty, null, o, args);
+        Invoke(o, name, BindingFlags.GetProperty, args);
 
     private static void SetValue(object o, string name, object? value) =>
-        o.GetType().InvokeMember(name, BindingFlags.SetProperty, null, o, new[] { value });
+        Invoke(o, name, BindingFlags.SetProperty, new[] { value });
 
     private static object? Call(object o, string name, params object?[] args) =>
-        o.GetType().InvokeMember(name, BindingFlags.InvokeMethod, null, o, args);
+        Invoke(o, name, BindingFlags.InvokeMethod, args);
+
+    // Late-bound calls wrap Inventor's own error in "Exception has been thrown by the target of an
+    // invocation": unwrap it so the real message (e.g. "file is read-only") is shown.
+    private static object? Invoke(object o, string name, BindingFlags flags, object?[] args)
+    {
+        try
+        {
+            return o.GetType().InvokeMember(name, flags, null, o, args);
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is not null)
+        {
+            throw new InvalidOperationException($"{name}: {ex.InnerException.Message}", ex.InnerException);
+        }
+    }
 
     private static IEnumerable<object> Items(object collection)
     {

@@ -108,11 +108,39 @@ public static partial class InventorProps
         // 1. Plain file copies, never over an existing file.
         foreach (var (from, to) in map)
             if (File.Exists(to)) throw new IOException(Loc.Get("Copy_Exists", to));
+        var created = new List<string>();
+        var newDirs = new List<string>();
+        try
+        {
+            return CopyAndLink(map, find, replace, renamePartNumber, progress, created, newDirs);
+        }
+        catch
+        {
+            // Half-done copies are useless: remove what this run created (never the originals).
+            foreach (string f in created)
+                try { File.SetAttributes(f, FileAttributes.Normal); File.Delete(f); } catch { }
+            foreach (string d in newDirs.OrderByDescending(d => d.Length))
+                try { if (!Directory.EnumerateFileSystemEntries(d).Any()) Directory.Delete(d); } catch { }
+            throw;
+        }
+    });
+
+    private static int CopyAndLink(IReadOnlyDictionary<string, string> map, string find, string replace,
+        ISet<string> renamePartNumber, IProgress<string> progress, List<string> created, List<string> newDirs)
+    {
+        string step = "", file = "";
+        try
+        {
+        step = "copy";
         foreach (var (from, to) in map)
         {
-            progress.Report(Path.GetFileName(to));
-            Directory.CreateDirectory(Path.GetDirectoryName(to)!);
+            file = Path.GetFileName(to);
+            progress.Report(file);
+            string dir = Path.GetDirectoryName(to)!;
+            for (string? d = dir; d is not null && !Directory.Exists(d); d = Path.GetDirectoryName(d)) newDirs.Add(d);
+            Directory.CreateDirectory(dir);
             File.Copy(from, to);
+            created.Add(to);
             var attr = File.GetAttributes(to);
             if ((attr & FileAttributes.ReadOnly) != 0) File.SetAttributes(to, attr & ~FileAttributes.ReadOnly);
         }
@@ -120,13 +148,15 @@ public static partial class InventorProps
         // 2. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
         //    which is what lets ReplaceReference accept it).
         int relinked = 0;
+        step = "re-link";
         foreach (string to in map.Values.Where(IsLinkable)
                      .OrderBy(p => Path.GetExtension(p).ToLowerInvariant() switch
                      {
                          ".ipt" => 0, ".iam" => 1, _ => 2, // drawings last
                      }))
         {
-            progress.Report(Path.GetFileName(to));
+            file = Path.GetFileName(to);
+            progress.Report(file);
             object doc = Open(to);
             try
             {
@@ -155,9 +185,11 @@ public static partial class InventorProps
             }
         }
         // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
+        step = "Part Number";
         foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
         {
-            progress.Report(Path.GetFileName(to));
+            file = Path.GetFileName(to);
+            progress.Report(file);
             object doc = Open(to);
             try
             {
@@ -169,7 +201,12 @@ public static partial class InventorProps
             }
         }
         return relinked;
-    });
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"{step} – {file}: {ex.Message}", ex);
+        }
+    }
 
     private static bool RenamePartNumber(object doc, string find, string replace)
     {

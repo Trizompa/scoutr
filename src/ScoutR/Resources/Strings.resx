@@ -138,7 +138,7 @@
   <data name="Copy_Working" xml:space="preserve"><value>Copying {0}...</value></data>
   <data name="Copy_Failed" xml:space="preserve"><value>The copy stopped: {0}
 
-Files already copied were left in place; the originals were not changed.</value></data>
+The copies made so far were removed; the originals were not changed.</value></data>
   <data name="Copy_Done" xml:space="preserve"><value>Design copied</value></data>
   <data name="Copy_SearchingDrawings" xml:space="preserve"><value>Looking for drawings: {0}</value></data>
   <data name="Ctx_CopyPart" xml:space="preserve"><value>Copy part...</value></data>
