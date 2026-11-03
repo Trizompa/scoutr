@@ -30,6 +30,11 @@
         </DockPanel>
 
         <ListView x:Name="FileList" BorderBrush="{StaticResource LineBrush}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Padding" Value="0,3"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="{l:T Copy_ColCopy}" Width="55">

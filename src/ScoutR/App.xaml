@@ -255,7 +255,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="MenuItem">
                         <Grid>
-                            <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,3" Margin="0">
+                            <Border x:Name="Bd" Background="Transparent" CornerRadius="4" Padding="12,4,12,5" Margin="0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>

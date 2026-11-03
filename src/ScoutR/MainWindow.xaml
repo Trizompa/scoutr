@@ -117,7 +117,7 @@
                                     <Button.Template>
                                         <ControlTemplate TargetType="Button">
                                             <Grid>
-                                                <Border x:Name="Bd" Background="Transparent" Padding="14,3">
+                                                <Border x:Name="Bd" Background="Transparent" Padding="14,4,14,5">
                                                     <StackPanel Orientation="Horizontal">
                                                         <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0"
                                                                RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -213,7 +213,7 @@
                     </TreeView.Resources>
                     <TreeView.ItemContainerStyle>
                         <Style TargetType="TreeViewItem">
-                            <Setter Property="Padding" Value="2,2"/>
+                            <Setter Property="Padding" Value="2,3,2,4"/>
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
                             <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
                             <EventSetter Event="Selected" Handler="TreeItem_Selected"/>
