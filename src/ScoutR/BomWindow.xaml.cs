@@ -64,6 +64,7 @@ public partial class BomWindow : Window
         "#TotalQty" => "Total QTY",
         "#Appearance" => "Appearance",
         "#Frame" => "Frame Member",
+        "#Markers" => "Internal markers",
         "Revision Number" => "REV",
         _ => key,
     };
@@ -292,7 +293,7 @@ public partial class BomWindow : Window
     private void Fields_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = FieldsBtn, MaxHeight = Math.Max(300, ActualHeight - 80) };
-        var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Frame", "#Structure", "#File", "#Path", "#Appearance" };
+        var all = new List<string> { "#Type", "#Item", "#Qty", "#TotalQty", "#Frame", "#Markers", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         // Custom properties: long names are leftovers (add-ins, imports), not real fields.

@@ -112,7 +112,12 @@ public static partial class InventorProps
                 if (cdoc is not null)
                 {
                     props["#File"] = Path.GetFileName(key);
-                    if (IsFrameMember(cdoc, key)) props["#Frame"] = "Yes";
+                    if (Path.GetExtension(key).Equals(".ipt", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var marks = Markers(cdoc);
+                        props["#Markers"] = string.Join("; ", marks);
+                        if (marks.Any(IsFrameMarker)) props["#Frame"] = "Yes";
+                    }
                     try
                     {
                         if (Get(cdoc, "ActiveAppearance") is { } app && Get(app, "DisplayName") is string a)
@@ -126,25 +131,41 @@ public static partial class InventorProps
         });
 
     /// <summary>
-    /// Frame Generator member: the part carries Frame Generator's attribute set (the file name is not used).
+    /// Names of the attribute sets (on the file and on its definition) and of the property sets of a part:
+    /// Frame Generator leaves its own marks there. Shown as a column too, to see what a file carries.
     /// </summary>
-    private static bool IsFrameMember(object doc, string path)
+    private static List<string> Markers(object doc)
     {
-        if (!Path.GetExtension(path).Equals(".ipt", StringComparison.OrdinalIgnoreCase)) return false;
+        var names = new List<string>();
+        void From(object? owner, string what)
+        {
+            if (owner is null) return;
+            try
+            {
+                foreach (object set in Items(Get(owner, what)!))
+                    if (Get(set, "Name") is string n && !names.Contains(n)) names.Add(n);
+            }
+            catch { /* not available through Apprentice */ }
+        }
+        From(doc, "AttributeSets");
+        object? def = null;
+        try { def = Get(doc, "ComponentDefinition"); } catch { }
+        From(def, "AttributeSets");
         try
         {
-            foreach (object set in Items(Get(doc, "AttributeSets")!))
-                if (Get(set, "Name") is string n &&
-                    (n.Contains("com.autodesk.FG", StringComparison.OrdinalIgnoreCase) ||
-                     n.Contains("FrameMember", StringComparison.OrdinalIgnoreCase)))
-                    return true;
+            foreach (object set in Items(Get(doc, "PropertySets")!))
+                if (Get(set, "Name") is string n && n != SummarySet && n != DocSummarySet && n != ProjectSet && n != CustomSet)
+                    names.Add("[" + n + "]");
         }
-        catch
-        {
-            // attributes not readable: not recognised
-        }
-        return false;
+        catch { }
+        return names;
     }
+
+    private static bool IsFrameMarker(string n) =>
+        n.Contains("com.autodesk.FG", StringComparison.OrdinalIgnoreCase) ||
+        n.Contains("FrameMember", StringComparison.OrdinalIgnoreCase) ||
+        n.Contains("Frame Generator", StringComparison.OrdinalIgnoreCase) ||
+        n.StartsWith("FG", StringComparison.OrdinalIgnoreCase);
 
     private static string StructureName(int s) => s switch
     {
