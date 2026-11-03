@@ -156,12 +156,7 @@ public partial class CopyDesignWindow : Window
             r.NewName = newRel;
 
             string? issue = null;
-            if (r.ModelStates > 1)
-            {
-                issue = Loc.Get("Copy_ModelStates", System.IO.Path.GetFileName(r.Path), r.ModelStates);
-                r.NewName = issue;
-            }
-            else if (string.Equals(newRel, rel, StringComparison.OrdinalIgnoreCase)) issue = Loc.Get("Copy_SameName");
+            if (string.Equals(newRel, rel, StringComparison.OrdinalIgnoreCase)) issue = Loc.Get("Copy_SameName");
             else if (File.Exists(r.NewPath)) issue = Loc.Get("Copy_Exists", newRel);
             else if (!targets.Add(r.NewPath)) issue = Loc.Get("Copy_Duplicate", newRel);
             if (issue is not null)

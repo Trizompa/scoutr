@@ -147,4 +147,5 @@ The copies made so far were removed; the originals were not changed.</value></da
 
 {0}</value></data>
   <data name="Copy_ModelStates" xml:space="preserve"><value>{0} has {1} Model States: Copy design is not possible on models with more than one Model State.</value></data>
+  <data name="Copy_StartingInventor" xml:space="preserve"><value>Starting Inventor for the Part Numbers...</value></data>
 </root>

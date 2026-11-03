@@ -205,6 +205,7 @@ public static partial class InventorProps
         //    A failure here is reported, the copy itself stays.
         step = "Part Number";
         var warnings = new List<string>();
+        var refused = new List<string>();
         foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)).OrderBy(LinkOrder))
         {
             file = Path.GetFileName(to);
@@ -213,10 +214,17 @@ public static partial class InventorProps
             {
                 RenamePartNumber(to, find, replace);
             }
-            catch (Exception ex)
+            catch
             {
-                warnings.Add($"{file}: {ex.Message}");
+                refused.Add(to); // e.g. several Model States: Apprentice can't, Inventor can
             }
+        }
+
+        // Failsafe: what Apprentice refused is done by Inventor itself.
+        if (refused.Count > 0)
+        {
+            try { Call(App(), "Close"); } catch { } // Apprentice lets go of the files before Inventor saves them
+            warnings.AddRange(RenamePartNumbersWithInventor(refused, find, replace, progress));
         }
 
         return warnings;
