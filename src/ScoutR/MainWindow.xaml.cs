@@ -707,7 +707,7 @@ public partial class MainWindow : Window
         }, "Msg_Deleted");
     }
 
-    private void Rename()
+    private async void Rename()
     {
         var pane = _active;
         var view = ActiveView;
@@ -722,6 +722,13 @@ public partial class MainWindow : Window
 
         try
         {
+            if (await RenameModelAsync(item.FullPath, name) is string renamed)
+            {
+                _a.Reload();
+                _b.Reload();
+                view.SelectPaths(new[] { renamed });
+                return;
+            }
             string target = FileOps.Rename(item.FullPath, name);
             _undo.Push(new UndoStep.Moved(item.FullPath.TrimEnd('\\'), target));
             _a.Reload();
@@ -733,6 +740,38 @@ public partial class MainWindow : Window
         {
             Status(Loc.Get("Msg_Error", ex.Message));
         }
+    }
+
+    /// <summary>
+    /// .ipt/.iam renamed (same extension): its drawings in the same folder are found, a drawing with the
+    /// model's name is renamed too and the links are kept. Null when there is no drawing (plain rename).
+    /// </summary>
+    private async Task<string?> RenameModelAsync(string path, string name)
+    {
+        string ext = Path.GetExtension(path);
+        if (!(ext.Equals(".ipt", StringComparison.OrdinalIgnoreCase) || ext.Equals(".iam", StringComparison.OrdinalIgnoreCase)) ||
+            !Path.GetExtension(name).Equals(ext, StringComparison.OrdinalIgnoreCase) ||
+            name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            name.Equals(Path.GetFileName(path), StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        Status(Loc.Get("Msg_SearchingDrawings"));
+        List<DesignFile> drawings;
+        try
+        {
+            drawings = await InventorProps.FindDrawingsAsync(Path.GetDirectoryName(path)!, new[] { path },
+                new Progress<string>(_ => { }), subfolders: false);
+        }
+        catch
+        {
+            return null; // no Apprentice: plain rename
+        }
+        if (drawings.Count == 0) return null;
+
+        string target = Path.Combine(Path.GetDirectoryName(path)!, name);
+        var newDrawings = await InventorProps.RenameWithDrawingsAsync(path, target, drawings.Select(d => d.Path).ToList());
+        Status(Loc.Get("Msg_RenamedWithDrawings", string.Join(", ", newDrawings.Select(Path.GetFileName))));
+        return target;
     }
 
     // ---- Undo (Ctrl+Z) ----

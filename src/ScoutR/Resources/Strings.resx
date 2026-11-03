@@ -110,6 +110,9 @@
   <data name="IProps_SaveFailed" xml:space="preserve"><value>iProperties of {0} not saved.
 
 {1}</value></data>
+  <data name="Rename_DrawingReadOnly" xml:space="preserve"><value>{0} is read-only (checked in to Vault?): nothing was renamed.</value></data>
+  <data name="Msg_SearchingDrawings" xml:space="preserve"><value>Looking for drawings...</value></data>
+  <data name="Msg_RenamedWithDrawings" xml:space="preserve"><value>Renamed, drawing kept linked: {0}</value></data>
   <data name="IProps_SaveChanges" xml:space="preserve"><value>Save the iProperties changes to {0}?</value></data>
   <data name="IProps_Fields" xml:space="preserve"><value>Fields</value></data>
   <data name="IProps_FieldsTip" xml:space="preserve"><value>Choose which fields are shown</value></data>

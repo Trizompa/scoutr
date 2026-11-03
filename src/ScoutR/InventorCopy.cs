@@ -78,14 +78,15 @@ public static partial class InventorProps
     /// Inventor's "OldVersions" backups are skipped; files Apprentice can't open (AutoCAD .dwg) too.
     /// </summary>
     public static Task<List<DesignFile>> FindDrawingsAsync(string root, IReadOnlyCollection<string> models,
-        IProgress<string> progress) => Worker.Run(() =>
+        IProgress<string> progress, bool subfolders = true) => Worker.Run(() =>
     {
         var wanted = new HashSet<string>(models, StringComparer.OrdinalIgnoreCase);
         var found = new List<DesignFile>();
         IEnumerable<string> files;
         try
         {
-            files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
+            files = Directory.EnumerateFiles(root, "*",
+                    subfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                 .Where(f => Path.GetExtension(f).ToLowerInvariant() is ".idw" or ".dwg" or ".ipn" &&
                             f.IndexOf("\\OldVersions\\", StringComparison.OrdinalIgnoreCase) < 0 &&
                             !wanted.Contains(f))
@@ -227,6 +228,79 @@ public static partial class InventorProps
             throw new InvalidOperationException($"{step} – {file}: {ex.Message}", ex);
         }
     }
+
+    /// <summary>
+    /// Renames a model and keeps its drawings linked: a drawing named like the model is renamed too,
+    /// then every drawing's reference is pointed at the new model file. Returns the new drawing paths.
+    /// On failure everything is moved back.
+    /// </summary>
+    public static Task<List<string>> RenameWithDrawingsAsync(string model, string newModel,
+        IReadOnlyList<string> drawings) => Worker.Run(() =>
+    {
+        string oldStem = Path.GetFileNameWithoutExtension(model);
+        string newStem = Path.GetFileNameWithoutExtension(newModel);
+        var plan = drawings.Select(d => (From: d,
+            To: Path.GetFileNameWithoutExtension(d).Equals(oldStem, StringComparison.OrdinalIgnoreCase)
+                ? Path.Combine(Path.GetDirectoryName(d)!, newStem + Path.GetExtension(d))
+                : d)).ToList();
+
+        // Check first, change nothing if something is in the way.
+        if (File.Exists(newModel)) throw new IOException(Loc.Get("Copy_Exists", newModel));
+        foreach (var (from, to) in plan)
+        {
+            if ((File.GetAttributes(from) & FileAttributes.ReadOnly) != 0)
+                throw new IOException(Loc.Get("Rename_DrawingReadOnly", Path.GetFileName(from)));
+            if (!from.Equals(to, StringComparison.OrdinalIgnoreCase) && File.Exists(to))
+                throw new IOException(Loc.Get("Copy_Exists", to));
+        }
+
+        var moved = new List<(string From, string To)>();
+        try
+        {
+            File.Move(model, newModel);
+            moved.Add((model, newModel));
+            foreach (var (from, to) in plan)
+            {
+                if (!from.Equals(to, StringComparison.OrdinalIgnoreCase))
+                {
+                    File.Move(from, to);
+                    moved.Add((from, to));
+                }
+                object doc = Open(to);
+                try
+                {
+                    bool refs = false;
+                    foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!).ToList())
+                    {
+                        string path = Get(d, "FullFileName") as string ?? "";
+                        if (path.Equals(model, StringComparison.OrdinalIgnoreCase) ||
+                            Path.GetFileName(path).Equals(Path.GetFileName(model), StringComparison.OrdinalIgnoreCase))
+                        {
+                            Call(d, "ReplaceReference", newModel);
+                            refs = true;
+                        }
+                    }
+                    if (refs)
+                    {
+                        object save = Get(App(), "FileSaveAs")!;
+                        Call(save, "AddFileToSave", doc, to);
+                        Call(save, "ExecuteSave");
+                    }
+                }
+                finally
+                {
+                    Close(doc);
+                }
+            }
+            return plan.Select(p => p.To).ToList();
+        }
+        catch
+        {
+            for (int i = moved.Count - 1; i >= 0; i--)
+                try { File.Move(moved[i].To, moved[i].From); } catch { }
+            throw;
+        }
+    });
 
     // Parts first, assemblies after, drawings last.
     private static int LinkOrder(string path) => Path.GetExtension(path).ToLowerInvariant() switch
