@@ -20,8 +20,8 @@ public sealed class BomLine
 public partial class BomWindow : Window
 {
     public static readonly string[] DefaultColumns =
-        { "#Item", "Part Number", "Revision Number", "#Qty", "#Structure", "Stock Number", "Description",
-          "Reference", "Thickness", "Laser", "Bend", "Material", "#Appearance", "Roll" };
+        { "#Type", "Part Number", "Revision Number", "#Item", "#Qty", "#####_QTY", "Description", "Reference",
+          "Material", "Thickness", "Laser", "Bend", "Roll", "#Structure", "Vendor", "#Path" };
 
     private readonly string _top;
     private readonly AppSettings _settings;
@@ -46,15 +46,20 @@ public partial class BomWindow : Window
         "#Item" => row.Item,
         "#Qty" => row.Qty.ToString(),
         "#Structure" => row.Structure,
+        "#Path" => row.Path,
+        "#Type" => row.Path.Length == 0 ? "Virtual"
+            : Path.GetExtension(row.Path).Equals(".iam", StringComparison.OrdinalIgnoreCase) ? "Assembly" : "Part",
         _ => row.Props.TryGetValue(key, out string? v) ? v : "",
     };
 
     private static string Label(string key) => key switch
     {
         "#Item" => Loc.Get("Bom_Item"),
-        "#Qty" => Loc.Get("Bom_Qty"),
         "#File" => Loc.Get("Bom_File"),
         "#Structure" => "BOM Structure",
+        "#Type" => "Component Type",
+        "#Path" => "File Path",
+        "#Qty" => "Item QTY",
         "#Appearance" => "Appearance",
         "Revision Number" => "REV",
         _ => key,
@@ -73,7 +78,7 @@ public partial class BomWindow : Window
             StatusText.Text = Loc.Get("Msg_Error", ex.Message);
             return;
         }
-        var keys = _settings.BomFields.Count > 0 ? _settings.BomFields : DefaultColumns.ToList();
+        var keys = _settings.BomColumnList.Count > 0 ? _settings.BomColumnList : DefaultColumns.ToList();
         foreach (string k in keys) AddColumn(k);
         BomList.ItemsSource = _rows.Select(r => new BomLine(r)).ToList();
         StatusText.Text = Loc.Get("Bom_Count", _rows.Count);
@@ -82,7 +87,7 @@ public partial class BomWindow : Window
 
     private void AddColumn(string key)
     {
-        var col = new GridViewColumn { Header = Label(key), Width = key switch { "#Item" => 90, "#Qty" or "Revision Number" => 50, "Description" => 260, "Part Number" => 180, _ => 110 } };
+        var col = new GridViewColumn { Header = Label(key), Width = key switch { "#Item" => 90, "#Qty" or "Revision Number" => 50, "Description" => 260, "Part Number" => 180, "#Path" => 400, "#Type" => 100, _ => 90 } };
         if (key == "#Item")
         {
             var tb = new FrameworkElementFactory(typeof(TextBlock));
@@ -103,7 +108,7 @@ public partial class BomWindow : Window
     private void SaveColumns()
     {
         if (BomGrid.Columns.Count == 0) return;
-        _settings.BomFields = Shown();
+        _settings.BomColumnList = Shown();
         _settings.Save();
     }
 
@@ -111,7 +116,7 @@ public partial class BomWindow : Window
     private void Fields_Click(object sender, RoutedEventArgs e)
     {
         var menu = new ContextMenu { PlacementTarget = FieldsBtn };
-        var all = new List<string> { "#Item", "#Qty", "#Structure", "#File", "#Appearance" };
+        var all = new List<string> { "#Type", "#Item", "#Qty", "#Structure", "#File", "#Path", "#Appearance" };
         all.AddRange(InventorProps.ProjectNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(InventorProps.SummaryNames.Where(n => _fields.Contains(n, StringComparer.OrdinalIgnoreCase)));
         all.AddRange(_fields.Where(f => !all.Contains(f, StringComparer.OrdinalIgnoreCase)).OrderBy(f => f));
