@@ -153,19 +153,14 @@ public static partial class InventorProps
         {
             file = Path.GetFileName(to);
             progress.Report(file);
-            object doc = Open(to);
             try
             {
-                if (RenamePartNumber(doc, find, replace)) Call(Get(doc, "PropertySets")!, "FlushToFile");
+                RenamePartNumber(to, find, replace);
             }
             catch (Exception ex)
             {
                 // The copy itself is fine: report the Part Number, don't undo everything for it.
                 warnings.Add($"{file}: {ex.Message}");
-            }
-            finally
-            {
-                Close(doc);
             }
         }
         // 3. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
@@ -215,14 +210,48 @@ public static partial class InventorProps
         }
     }
 
-    private static bool RenamePartNumber(object doc, string find, string replace)
+    /// <summary>
+    /// Renames the Part Number of a fresh copy (find → replace). Written straight into the file's property
+    /// set, which works on every Inventor file; Apprentice is the fallback for files that aren't OLE files.
+    /// </summary>
+    private static void RenamePartNumber(string path, string find, string replace)
     {
-        if (find.Length == 0) return false;
-        object? set = Items(Get(doc, "PropertySets")!).FirstOrDefault(x => Get(x, "Name") as string == ProjectSet);
-        object? prop = set is null ? null : Items(set).FirstOrDefault(x => Get(x, "Name") as string == "Part Number");
-        if (prop is null || Get(prop, "Value") is not string value ||
-            value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return false;
-        SetValue(prop, "Value", value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
-        return true;
+        if (find.Length == 0) return;
+        string? value;
+        try
+        {
+            value = OleProps.Read(path, OleProps.DesignTracking, OleProps.PartNumberId);
+        }
+        catch
+        {
+            RenamePartNumberApprentice(path, find, replace);
+            return;
+        }
+        if (value is null)
+        {
+            RenamePartNumberApprentice(path, find, replace);
+            return;
+        }
+        if (value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return;
+        OleProps.Write(path, OleProps.DesignTracking, OleProps.PartNumberId,
+            value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void RenamePartNumberApprentice(string path, string find, string replace)
+    {
+        object doc = Open(path);
+        try
+        {
+            object? set = Items(Get(doc, "PropertySets")!).FirstOrDefault(x => Get(x, "Name") as string == ProjectSet);
+            object? prop = set is null ? null : Items(set).FirstOrDefault(x => Get(x, "Name") as string == "Part Number");
+            if (prop is null || Get(prop, "Value") is not string value ||
+                value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return;
+            SetValue(prop, "Value", value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
+            Call(Get(doc, "PropertySets")!, "FlushToFile");
+        }
+        finally
+        {
+            Close(doc);
+        }
     }
 }
