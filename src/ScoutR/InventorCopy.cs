@@ -189,6 +189,7 @@ public static partial class InventorProps
         //    Parts first, then assemblies, then drawings: each is opened as a top document when possible.
         step = "Part Number";
         var warnings = new List<string>();
+        var refused = new List<(string Path, string Why)>();
         WithFreshApprentice(() =>
         {
             foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p))
@@ -202,20 +203,26 @@ public static partial class InventorProps
                 }
                 catch (Exception ex)
                 {
-                    // Some files refuse the edit through Apprentice (E_FAIL): write the property straight
-                    // into the file instead. Only if that fails too is it reported; the copy stays.
-                    try
-                    {
-                        RenamePartNumberInFile(to, find, replace);
-                    }
-                    catch (Exception ex2)
-                    {
-                        warnings.Add($"{file}: {ex.Message} / {ex2.Message}");
-                    }
+                    refused.Add((to, ex.Message));
                 }
             }
             return true;
         });
+
+        // Some files refuse the edit through Apprentice (E_FAIL): once Apprentice has let go of them,
+        // write the property straight into the file. Only if that fails too is it reported; the copy stays.
+        foreach (var (to, why) in refused)
+        {
+            file = Path.GetFileName(to);
+            try
+            {
+                RenamePartNumberInFile(to, find, replace);
+            }
+            catch (Exception ex)
+            {
+                warnings.Add($"{file}: {why} / {ex.Message}");
+            }
+        }
         return warnings;
         }
         catch (Exception ex)
