@@ -145,7 +145,30 @@ public static partial class InventorProps
             if ((attr & FileAttributes.ReadOnly) != 0) File.SetAttributes(to, attr & ~FileAttributes.ReadOnly);
         }
 
-        // 2. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
+        // 2. Part Numbers, on the fresh copies before anything else loads them (a file already held by
+        //    an assembly or drawing refuses property edits). The re-link save keeps what is on disk.
+        step = "Part Number";
+        var warnings = new List<string>();
+        foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
+        {
+            file = Path.GetFileName(to);
+            progress.Report(file);
+            object doc = Open(to);
+            try
+            {
+                if (RenamePartNumber(doc, find, replace)) Call(Get(doc, "PropertySets")!, "FlushToFile");
+            }
+            catch (Exception ex)
+            {
+                // The copy itself is fine: report the Part Number, don't undo everything for it.
+                warnings.Add($"{file}: {ex.Message}");
+            }
+            finally
+            {
+                Close(doc);
+            }
+        }
+        // 3. Re-link each copy: parts first, assemblies after (a copy keeps the original's internal id,
         //    which is what lets ReplaceReference accept it).
         int relinked = 0;
         step = "re-link";
@@ -178,32 +201,6 @@ public static partial class InventorProps
                     Call(save, "ExecuteSave");
                     relinked++;
                 }
-            }
-            finally
-            {
-                Close(doc);
-            }
-        }
-        // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
-        // Release everything the re-link pass loaded (e.g. the part held by its drawing), so each file
-        // is opened fresh, as a top document, for its Part Number.
-        try { Call(App(), "Close"); } catch { /* older Apprentice: documents are closed one by one anyway */ }
-
-        step = "Part Number";
-        var warnings = new List<string>();
-        foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
-        {
-            file = Path.GetFileName(to);
-            progress.Report(file);
-            object doc = Open(to);
-            try
-            {
-                if (RenamePartNumber(doc, find, replace)) Call(Get(doc, "PropertySets")!, "FlushToFile");
-            }
-            catch (Exception ex)
-            {
-                // The copy itself is fine: report the Part Number, don't undo everything for it.
-                warnings.Add($"{file}: {ex.Message}");
             }
             finally
             {
