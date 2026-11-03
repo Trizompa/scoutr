@@ -151,6 +151,18 @@ public static partial class InventorProps
         object? def = null;
         try { def = Get(doc, "ComponentDefinition"); } catch { }
         From(def, "AttributeSets");
+        // Frame Generator members are Content Center structural shapes: they carry the G_L (length) parameter.
+        try
+        {
+            if (def is not null)
+                foreach (object prm in Items(Get(def, "Parameters")!))
+                    if (Get(prm, "Name") is string pn && pn.Equals("G_L", StringComparison.OrdinalIgnoreCase))
+                    {
+                        names.Add("G_L");
+                        break;
+                    }
+        }
+        catch { names.Add("(parameters not readable)"); }
         try
         {
             foreach (object set in Items(Get(doc, "PropertySets")!))
@@ -162,6 +174,7 @@ public static partial class InventorProps
     }
 
     private static bool IsFrameMarker(string n) =>
+        n == "G_L" ||
         n.Contains("com.autodesk.FG", StringComparison.OrdinalIgnoreCase) ||
         n.Contains("FrameMember", StringComparison.OrdinalIgnoreCase) ||
         n.Contains("Frame Generator", StringComparison.OrdinalIgnoreCase) ||
