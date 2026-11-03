@@ -187,7 +187,7 @@ public partial class CopyDesignWindow : Window
             var warnings = await InventorProps.CopyDesignAsync(map, FindBox.Text, ReplaceBox.Text, renamePn, progress);
             if (warnings.Count > 0)
                 MessageBox.Show(this, Loc.Get("Copy_PnWarning", string.Join("\n", warnings)), Title,
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBoxButton.OK, MessageBoxImage.Information);
             Result = map[_top];
             DialogResult = true;
         }
