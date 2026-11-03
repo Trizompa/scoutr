@@ -3,7 +3,8 @@ using System.IO;
 namespace ScoutR;
 
 /// <summary>One line of the structured BOM. <see cref="Props"/>: iProperty name → shown text.</summary>
-public sealed record BomRow(string Item, int Level, int Qty, string Path, IReadOnlyDictionary<string, string> Props);
+public sealed record BomRow(string Item, int Level, int Qty, string Path, string Structure,
+    IReadOnlyDictionary<string, string> Props);
 
 /// <summary>
 /// Structured BOM (all levels) of an assembly, read through Apprentice like Inventor builds it:
@@ -41,7 +42,7 @@ public static partial class InventorProps
                 {
                     string item = prefix + (++n).ToString();
                     var props = Props(g.Key, g.Def, g.Doc);
-                    rows.Add(new BomRow(item, level, g.Qty, g.Doc is null ? "" : g.Key, props));
+                    rows.Add(new BomRow(item, level, g.Qty, g.Doc is null ? "" : g.Key, StructureName(g.Structure), props));
                     if (g.Structure != BomPurchased && Occurrences(g.Def) is not null)
                         Expand(g.Def, level + 1, item + ".");
                 }
@@ -108,11 +109,31 @@ public static partial class InventorProps
                 {
                     // unreadable: the row keeps its file name only
                 }
-                if (cdoc is not null) props["#File"] = Path.GetFileName(key);
+                if (cdoc is not null)
+                {
+                    props["#File"] = Path.GetFileName(key);
+                    try
+                    {
+                        if (Get(cdoc, "ActiveAppearance") is { } app && Get(app, "DisplayName") is string a)
+                            props["#Appearance"] = a;
+                    }
+                    catch { /* assemblies, or not exposed by Apprentice */ }
+                }
                 cache[key] = props;
                 return props;
             }
         });
+
+    private static string StructureName(int s) => s switch
+    {
+        51970 => "Normal",
+        51971 => "Phantom",
+        51972 => "Reference",
+        51973 => "Purchased",
+        51974 => "Inseparable",
+        51975 => "Varies",
+        _ => "",
+    };
 
     private static object? Occurrences(object def)
     {
