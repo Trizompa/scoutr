@@ -755,7 +755,8 @@ public partial class MainWindow : Window
 
     /// <summary>
     /// .ipt/.iam renamed (same extension): its drawings in the same folder are found, a drawing with the
-    /// model's name is renamed too and the links are kept. Null when there is no drawing (plain rename).
+    /// model's name is renamed too, the links are kept and the Part Number follows the new name.
+    /// Null when Apprentice is missing or the name is not a model name (plain rename).
     /// </summary>
     private async Task<string?> RenameModelAsync(string path, string name)
     {
@@ -777,11 +778,13 @@ public partial class MainWindow : Window
         {
             return null; // no Apprentice: plain rename
         }
-        if (drawings.Count == 0) return null;
-
         string target = Path.Combine(Path.GetDirectoryName(path)!, name);
-        var newDrawings = await InventorProps.RenameWithDrawingsAsync(path, target, drawings.Select(d => d.Path).ToList());
-        Status(Loc.Get("Msg_RenamedWithDrawings", string.Join(", ", newDrawings.Select(Path.GetFileName))));
+        var (newDrawings, warning) = await InventorProps.RenameWithDrawingsAsync(path, target,
+            drawings.Select(d => d.Path).ToList());
+        Status(newDrawings.Count == 0 ? Loc.Get("Msg_Renamed")
+            : Loc.Get("Msg_RenamedWithDrawings", string.Join(", ", newDrawings.Select(Path.GetFileName))));
+        if (warning is not null)
+            MessageBox.Show(this, warning, "ScoutR", MessageBoxButton.OK, MessageBoxImage.Information);
         return target;
     }
 

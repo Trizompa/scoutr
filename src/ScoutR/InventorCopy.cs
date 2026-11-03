@@ -234,7 +234,7 @@ public static partial class InventorProps
     /// then every drawing's reference is pointed at the new model file. Returns the new drawing paths.
     /// On failure everything is moved back.
     /// </summary>
-    public static Task<List<string>> RenameWithDrawingsAsync(string model, string newModel,
+    public static Task<(List<string> Drawings, string? Warning)> RenameWithDrawingsAsync(string model, string newModel,
         IReadOnlyList<string> drawings) => Worker.Run(() =>
     {
         string oldStem = Path.GetFileNameWithoutExtension(model);
@@ -292,7 +292,17 @@ public static partial class InventorProps
                     Close(doc);
                 }
             }
-            return plan.Select(p => p.To).ToList();
+            // Part Number follows the name (only the part that matches the old name changes).
+            string? warning = null;
+            try
+            {
+                RenamePartNumber(newModel, oldStem, newStem);
+            }
+            catch
+            {
+                warning = Loc.Get("Copy_PnNotRenamed", Path.GetFileName(newModel));
+            }
+            return (plan.Select(p => p.To).ToList(), warning);
         }
         catch
         {
