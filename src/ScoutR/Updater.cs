@@ -47,7 +47,11 @@ public sealed class Updater
     {
         if (_pending is null) return;
         await _manager.DownloadUpdatesAsync(_pending);
-        _manager.ApplyUpdatesAndRestart(_pending.TargetFullRelease,
-            maximized ? new[] { "--maximized" } : Array.Empty<string>());
+        // The updater waits for ScoutR to exit, then replaces the files and restarts it. ScoutR ends itself
+        // hard: a normal exit can hang while Inventor Apprentice unloads, and a ScoutR still running
+        // keeps its files locked, so the update would silently not happen.
+        _manager.WaitExitThenApplyUpdates(_pending.TargetFullRelease, silent: false, restart: true,
+            restartArgs: maximized ? new[] { "--maximized" } : Array.Empty<string>());
+        System.Diagnostics.Process.GetCurrentProcess().Kill();
     }
 }

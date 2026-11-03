@@ -22,6 +22,9 @@ public partial class MainWindow : Window
         InitializeComponent();
         if (_settings.TreeWidth > 60) TreeColumn.Width = new GridLength(_settings.TreeWidth);
         Closing += (_, _) => SaveSettings();
+        // Settings are saved: end the process at once. Unloading Inventor Apprentice can hang, and a
+        // ScoutR left running in the background would block the next update.
+        Closed += (_, _) => System.Diagnostics.Process.GetCurrentProcess().Kill();
         if (AppIcon.Load() is { } icon) Icon = icon; // Explorer icon, recoloured green
 
         // Always start maximized (also after an update restart).
