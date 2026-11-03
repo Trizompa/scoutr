@@ -12,6 +12,7 @@ public sealed class AppSettings
     /// <summary>Standard iProperties the user chose not to show (Fields menu of the iProperties panel).</summary>
     public List<string> HiddenIProps { get; set; } = new();
     /// <summary>BOM window columns, in order ("#Item", "#Qty", "#File" or an iProperty name).</summary>
+    public bool BomFlat { get; set; }
     public List<string> BomColumnSet { get; set; } = new();
 
     private static readonly string FilePath = Path.Combine(

@@ -82,9 +82,44 @@ public partial class BomWindow : Window
         }
         var keys = _settings.BomColumnSet.Count > 0 ? _settings.BomColumnSet : DefaultColumns.ToList();
         foreach (string k in keys) AddColumn(k);
-        BomList.ItemsSource = _rows.Select(r => new BomLine(r)).ToList();
-        StatusText.Text = Loc.Get("Bom_Count", _rows.Count);
-        FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
+        FlatBox.IsChecked = _settings.BomFlat;
+        FlatBox.IsEnabled = FieldsBtn.IsEnabled = ExportBtn.IsEnabled = true;
+        ShowRows();
+    }
+
+    /// <summary>Rows on screen: the structure, or each file once with its total quantity.</summary>
+    private List<BomRow> Current() => FlatBox.IsChecked == true ? Flat(_rows) : _rows;
+
+    private static List<BomRow> Flat(List<BomRow> rows)
+    {
+        var order = new List<string>();
+        var sum = new Dictionary<string, BomRow>(StringComparer.OrdinalIgnoreCase);
+        foreach (var r in rows)
+        {
+            string key = r.Path.Length > 0 ? r.Path : "virtual|" + Text(r, "Part Number");
+            if (sum.TryGetValue(key, out var known))
+                sum[key] = known with { TotalQty = known.TotalQty + r.TotalQty };
+            else
+            {
+                order.Add(key);
+                sum[key] = r with { Level = 0 };
+            }
+        }
+        return order.Select((k, i) => sum[k] with { Item = (i + 1).ToString(), Qty = sum[k].TotalQty }).ToList();
+    }
+
+    private void ShowRows()
+    {
+        var rows = Current();
+        BomList.ItemsSource = rows.Select(r => new BomLine(r)).ToList();
+        StatusText.Text = Loc.Get(FlatBox.IsChecked == true ? "Bom_CountFlat" : "Bom_Count", rows.Count);
+    }
+
+    private void Flat_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.BomFlat = FlatBox.IsChecked == true;
+        _settings.Save();
+        ShowRows();
     }
 
     private void AddColumn(string key)
@@ -146,13 +181,13 @@ public partial class BomWindow : Window
         var dlg = new SaveFileDialog
         {
             Filter = "Excel (*.xlsx)|*.xlsx",
-            FileName = Path.GetFileNameWithoutExtension(_top) + " BOM.xlsx",
+            FileName = Path.GetFileNameWithoutExtension(_top) + (FlatBox.IsChecked == true ? " BOM totals.xlsx" : " BOM.xlsx"),
             InitialDirectory = Path.GetDirectoryName(_top),
         };
         if (dlg.ShowDialog(this) != true) return;
 
         var keys = Shown();
-        var rows = _rows.Select(r => (IReadOnlyList<XlsxWriter.Cell>)keys.Select(k => k switch
+        var rows = Current().Select(r => (IReadOnlyList<XlsxWriter.Cell>)keys.Select(k => k switch
         {
             "#Item" => new XlsxWriter.Cell(r.Item, r.Level),
             "#Qty" => new XlsxWriter.Cell(r.Qty),

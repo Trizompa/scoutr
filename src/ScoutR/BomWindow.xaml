@@ -10,6 +10,8 @@
                     Click="Export_Click" IsEnabled="False"/>
             <Button DockPanel.Dock="Right" x:Name="FieldsBtn" Content="{l:T IProps_Fields}" Padding="12,3"
                     Margin="0,0,8,0" Click="Fields_Click" IsEnabled="False"/>
+            <CheckBox DockPanel.Dock="Right" x:Name="FlatBox" Content="{l:T Bom_Flat}" VerticalAlignment="Center"
+                      Margin="0,0,16,0" Click="Flat_Click" IsEnabled="False"/>
             <TextBlock x:Name="FileText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                        Foreground="{StaticResource MutedBrush}"/>
         </DockPanel>
