@@ -513,6 +513,9 @@ public partial class MainWindow : Window
             if (sel.Count == 1 && !first.IsDirectory &&
                 Path.GetExtension(first.FullPath).Equals(".iam", StringComparison.OrdinalIgnoreCase))
                 menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
+            if (sel.Count == 1 && !first.IsDirectory &&
+                Path.GetExtension(first.FullPath).Equals(".ipt", StringComparison.OrdinalIgnoreCase))
+                menu.Items.Add(MenuEntry("Ctx_CopyPart", null, true, () => CopyDesign(first.FullPath)));
             if (sel.Count == 1 && first.IsDirectory)
             {
                 string f = first.FullPath;

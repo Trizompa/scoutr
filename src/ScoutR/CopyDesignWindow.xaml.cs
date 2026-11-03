@@ -12,7 +12,7 @@ public sealed class DesignRow : ObservableObject
     private string _newName = "";
     private bool _hasProblem;
 
-    public DesignRow(DesignFile file, string root)
+    public DesignRow(DesignFile file, string root, bool copyUsed = true)
     {
         Path = file.Path;
         Missing = file.Missing;
@@ -23,7 +23,8 @@ public sealed class DesignRow : ObservableObject
         InRoot = Path.StartsWith(root.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase) &&
                  Path.IndexOf("\\Content Center Files\\", StringComparison.OrdinalIgnoreCase) < 0;
         OldName = InRoot ? System.IO.Path.GetRelativePath(root, Path) : Path;
-        _copy = InRoot && !Missing;
+        // For a single part, the files it uses (derived parts, skeleton) are reused, not copied.
+        _copy = InRoot && !Missing && (copyUsed || file.Depth == 0 || file.IsDrawing);
         // Frame Generator members ("... - 001.ipt") keep the Part Number Inventor generated for them.
         _renamePn = !System.Text.RegularExpressions.Regex.IsMatch(
             System.IO.Path.GetFileNameWithoutExtension(Path), @"\s-\s*\d+$");
@@ -79,6 +80,8 @@ public partial class CopyDesignWindow : Window
         RootText.Text = _root;
         FindBox.Text = System.IO.Path.GetFileNameWithoutExtension(top);
         ReplaceBox.Text = FindBox.Text;
+        if (!System.IO.Path.GetExtension(top).Equals(".iam", StringComparison.OrdinalIgnoreCase))
+            Title = Loc.Get("Copy_PartTitle");
         Loaded += async (_, _) => await LoadAsync();
     }
 
@@ -88,7 +91,8 @@ public partial class CopyDesignWindow : Window
         try
         {
             var files = await InventorProps.CollectAsync(_top);
-            _rows = files.Select(f => new DesignRow(f, _root)).ToList();
+            bool assembly = System.IO.Path.GetExtension(_top).Equals(".iam", StringComparison.OrdinalIgnoreCase);
+            _rows = files.Select(f => new DesignRow(f, _root, copyUsed: assembly)).ToList();
             foreach (var r in _rows) r.Changed += Refresh;
             FileList.ItemsSource = _rows;
             Refresh();
