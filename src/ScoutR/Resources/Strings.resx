@@ -106,6 +106,10 @@
   <data name="IProps_Saved" xml:space="preserve"><value>Saved.</value></data>
   <data name="IProps_ReadOnlyFile" xml:space="preserve"><value>The file is read-only (checked in to Vault?): check it out to edit.</value></data>
   <data name="IProps_NoApprentice" xml:space="preserve"><value>Inventor Apprentice not found: it is installed with Autodesk Inventor.</value></data>
+  <data name="IProps_SaveFailedModelStates" xml:space="preserve"><value>iProperties of {0} not saved (probably more Model States): change them in Inventor.</value></data>
+  <data name="IProps_SaveFailed" xml:space="preserve"><value>iProperties of {0} not saved.
+
+{1}</value></data>
   <data name="IProps_SaveChanges" xml:space="preserve"><value>Save the iProperties changes to {0}?</value></data>
   <data name="IProps_Fields" xml:space="preserve"><value>Fields</value></data>
   <data name="IProps_FieldsTip" xml:space="preserve"><value>Choose which fields are shown</value></data>

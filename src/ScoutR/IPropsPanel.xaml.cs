@@ -221,7 +221,14 @@ public partial class IPropsPanel : UserControl
         }
         catch (Exception ex)
         {
-            InfoText.Text = Loc.Get("Msg_Error", ex.Message);
+            // Failed save: tell why, then show what is really in the file (no "save changes?" later).
+            string name = Path.GetFileName(_path);
+            string msg = ex.Message.Contains("80004005") || ex.Message.Contains("E_FAIL")
+                ? Loc.Get("IProps_SaveFailedModelStates", name)
+                : Loc.Get("IProps_SaveFailed", name, ex.Message);
+            MessageBox.Show(Window.GetWindow(this)!, msg, "ScoutR", MessageBoxButton.OK, MessageBoxImage.Information);
+            FillAll();
+            InfoText.Text = "";
         }
         UpdateButtons();
     }
