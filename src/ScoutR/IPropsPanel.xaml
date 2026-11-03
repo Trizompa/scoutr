@@ -5,7 +5,7 @@
     <UserControl.Resources>
         <!-- One iProperty: name on the left, editable value on the right -->
         <DataTemplate x:Key="PropRow">
-            <Grid Margin="0,3">
+            <Grid Margin="0,2">
                 <Grid.ColumnDefinitions>
                     <!-- As wide as the longest visible label, the same in all three groups -->
                     <ColumnDefinition Width="Auto" SharedSizeGroup="IPropLabel"/>
