@@ -108,9 +108,82 @@ public partial class BomWindow : Window
         return order.Select((k, i) => sum[k] with { Item = (i + 1).ToString(), Qty = sum[k].TotalQty }).ToList();
     }
 
+    // ---- Sorting: click a column header (again = reverse). Sub-items stay under their assembly. ----
+
+    private string? _sortKey;
+    private bool _sortDesc;
+
+    private void Header_Click(object sender, RoutedEventArgs e)
+    {
+        if (e.OriginalSource is not GridViewColumnHeader { Column: { } col } || !_keys.TryGetValue(col, out string? key)) return;
+        if (key == _sortKey) _sortDesc = !_sortDesc;
+        else { _sortKey = key; _sortDesc = false; }
+        foreach (var (c, k) in _keys) c.Header = Label(k) + (k == _sortKey ? (_sortDesc ? " ▼" : " ▲") : "");
+        ShowRows();
+    }
+
+    private List<BomRow> Sorted(List<BomRow> rows)
+    {
+        if (_sortKey is null) return rows;
+        var result = new List<BomRow>(rows.Count);
+        SortBlock(rows, 0, rows.Count, result);
+        return result;
+    }
+
+    // rows[from..to) is a run of siblings, each followed by its own sub-items (deeper level).
+    private void SortBlock(List<BomRow> rows, int from, int to, List<BomRow> result)
+    {
+        var blocks = new List<(int Start, int End)>();
+        for (int i = from; i < to;)
+        {
+            int j = i + 1;
+            while (j < to && rows[j].Level > rows[i].Level) j++;
+            blocks.Add((i, j));
+            i = j;
+        }
+        var ordered = blocks.OrderBy(b => rows[b.Start], Comparer<BomRow>.Create(Compare)).ToList();
+        if (_sortDesc) ordered.Reverse();
+        foreach (var (start, end) in ordered)
+        {
+            result.Add(rows[start]);
+            SortBlock(rows, start + 1, end, result);
+        }
+    }
+
+    private int Compare(BomRow a, BomRow b)
+    {
+        string key = _sortKey!;
+        if (key == "#Item") return CompareItems(a.Item, b.Item);
+        if (key is "#Qty") return a.Qty.CompareTo(b.Qty);
+        if (key is "#TotalQty") return a.TotalQty.CompareTo(b.TotalQty);
+        string x = Text(a, key), y = Text(b, key);
+        if (double.TryParse(Number(x), out double nx) && double.TryParse(Number(y), out double ny)) return nx.CompareTo(ny);
+        return string.Compare(x, y, StringComparison.CurrentCultureIgnoreCase);
+    }
+
+    // "1.53 kg" → "1.53": numbers with a unit still sort as numbers.
+    private static string Number(string s)
+    {
+        int sp = s.IndexOf(' ');
+        return sp > 0 ? s[..sp] : s;
+    }
+
+    private static int CompareItems(string a, string b)
+    {
+        var x = a.Split('.');
+        var y = b.Split('.');
+        for (int i = 0; i < Math.Min(x.Length, y.Length); i++)
+        {
+            int c = int.TryParse(x[i], out int p) && int.TryParse(y[i], out int q) ? p.CompareTo(q)
+                : string.CompareOrdinal(x[i], y[i]);
+            if (c != 0) return c;
+        }
+        return x.Length.CompareTo(y.Length);
+    }
+
     private void ShowRows()
     {
-        var rows = Current();
+        var rows = Sorted(Current());
         BomList.ItemsSource = rows.Select(r => new BomLine(r)).ToList();
         StatusText.Text = Loc.Get(FlatBox.IsChecked == true ? "Bom_CountFlat" : "Bom_Count", rows.Count);
     }
@@ -187,7 +260,7 @@ public partial class BomWindow : Window
         if (dlg.ShowDialog(this) != true) return;
 
         var keys = Shown();
-        var rows = Current().Select(r => (IReadOnlyList<XlsxWriter.Cell>)keys.Select(k => k switch
+        var rows = Sorted(Current()).Select(r => (IReadOnlyList<XlsxWriter.Cell>)keys.Select(k => k switch
         {
             "#Item" => new XlsxWriter.Cell(r.Item, r.Level),
             "#Qty" => new XlsxWriter.Cell(r.Qty),

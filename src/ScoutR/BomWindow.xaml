@@ -19,7 +19,7 @@
             <Button DockPanel.Dock="Right" Content="{l:T IProps_Close}" Width="90" IsCancel="True" Click="Close_Click"/>
             <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
         </DockPanel>
-        <ListView x:Name="BomList" BorderBrush="{StaticResource LineBrush}">
+        <ListView x:Name="BomList" BorderBrush="{StaticResource LineBrush}" GridViewColumnHeader.Click="Header_Click">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="Padding" Value="0,3"/>
