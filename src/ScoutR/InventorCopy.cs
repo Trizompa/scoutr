@@ -202,8 +202,16 @@ public static partial class InventorProps
                 }
                 catch (Exception ex)
                 {
-                    // The copy itself is fine: report the Part Number, don't undo everything for it.
-                    warnings.Add($"{file}: {ex.Message}");
+                    // Some files refuse the edit through Apprentice (E_FAIL): write the property straight
+                    // into the file instead. Only if that fails too is it reported; the copy stays.
+                    try
+                    {
+                        RenamePartNumberInFile(to, find, replace);
+                    }
+                    catch (Exception ex2)
+                    {
+                        warnings.Add($"{file}: {ex.Message} / {ex2.Message}");
+                    }
                 }
             }
             return true;
@@ -221,6 +229,16 @@ public static partial class InventorProps
     {
         ".ipt" => 0, ".iam" => 1, _ => 2,
     };
+
+    /// <summary>Same as <see cref="RenamePartNumber"/>, written straight into the file's OLE property set.</summary>
+    private static void RenamePartNumberInFile(string path, string find, string replace)
+    {
+        if (find.Length == 0) return;
+        string? value = OleProps.Read(path, OleProps.DesignTracking, OleProps.PartNumberId);
+        if (value is null || value.IndexOf(find, StringComparison.OrdinalIgnoreCase) < 0) return;
+        OleProps.Write(path, OleProps.DesignTracking, OleProps.PartNumberId,
+            value.Replace(find, replace, StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>Renames the Part Number of a copy (find → replace), if it contains the find text.</summary>
     private static void RenamePartNumber(string path, string find, string replace)
