@@ -39,28 +39,14 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="3"/>
+            <RowDefinition Height="0"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Active pane marker -->
-        <Border Grid.Row="0">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="Background" Value="Transparent"/>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsActive}" Value="True">
-                            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
-        </Border>
-
         <!-- Back / Up / address -->
-        <Grid Grid.Row="1" Margin="6,4">
+        <Grid Grid.Row="1" Margin="6,6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
@@ -70,14 +56,18 @@
                     ToolTip="{l:T Tip_Back}" Click="Back_Click" IsEnabled="{Binding CanGoBack}"/>
             <Button Grid.Column="1" Style="{StaticResource NavBtn}" Content="&#xE74A;"
                     ToolTip="{l:T Tip_Up}" Click="Up_Click"/>
-            <Border Grid.Column="2" Margin="4,0,0,0" BorderThickness="1" Background="White" Height="26"
+            <Border Grid.Column="2" Margin="4,0,0,0" Background="White" Height="26"
                     MouseLeftButtonDown="AddressBorder_MouseDown">
                 <Border.Style>
                     <Style TargetType="Border">
                         <Setter Property="BorderBrush" Value="{StaticResource LineBrush}"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Padding" Value="1"/>
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsActive}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                                <Setter Property="Padding" Value="0"/>
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
