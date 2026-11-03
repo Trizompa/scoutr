@@ -143,4 +143,7 @@ The copies made so far were removed; the originals were not changed.</value></da
   <data name="Copy_SearchingDrawings" xml:space="preserve"><value>Looking for drawings: {0}</value></data>
   <data name="Ctx_CopyPart" xml:space="preserve"><value>Copy part...</value></data>
   <data name="Copy_PartTitle" xml:space="preserve"><value>Copy part</value></data>
+  <data name="Copy_PnWarning" xml:space="preserve"><value>The files were copied and re-linked, but the Part Number could not be renamed in:
+
+{0}</value></data>
 </root>

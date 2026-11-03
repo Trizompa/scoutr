@@ -102,8 +102,8 @@ public static partial class InventorProps
     /// uses the new files. In the copies listed in <paramref name="renamePartNumber"/> (new paths),
     /// "Part Number" is renamed the same way.
     /// </summary>
-    public static Task<int> CopyDesignAsync(IReadOnlyDictionary<string, string> map, string find, string replace,
-        ISet<string> renamePartNumber, IProgress<string> progress) => Worker.Run(() =>
+    public static Task<List<string>> CopyDesignAsync(IReadOnlyDictionary<string, string> map, string find,
+        string replace, ISet<string> renamePartNumber, IProgress<string> progress) => Worker.Run(() =>
     {
         // 1. Plain file copies, never over an existing file.
         foreach (var (from, to) in map)
@@ -125,7 +125,7 @@ public static partial class InventorProps
         }
     });
 
-    private static int CopyAndLink(IReadOnlyDictionary<string, string> map, string find, string replace,
+    private static List<string> CopyAndLink(IReadOnlyDictionary<string, string> map, string find, string replace,
         ISet<string> renamePartNumber, IProgress<string> progress, List<string> created, List<string> newDirs)
     {
         string step = "", file = "";
@@ -185,7 +185,12 @@ public static partial class InventorProps
             }
         }
         // 3. Part Numbers, in a separate pass: the re-link save above does not carry property edits.
+        // Release everything the re-link pass loaded (e.g. the part held by its drawing), so each file
+        // is opened fresh, as a top document, for its Part Number.
+        try { Call(App(), "Close"); } catch { /* older Apprentice: documents are closed one by one anyway */ }
+
         step = "Part Number";
+        var warnings = new List<string>();
         foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p)))
         {
             file = Path.GetFileName(to);
@@ -195,12 +200,17 @@ public static partial class InventorProps
             {
                 if (RenamePartNumber(doc, find, replace)) Call(Get(doc, "PropertySets")!, "FlushToFile");
             }
+            catch (Exception ex)
+            {
+                // The copy itself is fine: report the Part Number, don't undo everything for it.
+                warnings.Add($"{file}: {ex.Message}");
+            }
             finally
             {
                 Close(doc);
             }
         }
-        return relinked;
+        return warnings;
         }
         catch (Exception ex)
         {
