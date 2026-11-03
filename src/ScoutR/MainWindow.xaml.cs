@@ -445,6 +445,7 @@ public partial class MainWindow : Window
             case Key.C when ctrl && !inText: PutOnClipboard(cut: false); e.Handled = true; break;
             case Key.X when ctrl && !inText: PutOnClipboard(cut: true); e.Handled = true; break;
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
+            case Key.C when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && !inText: CopyAsPath(); e.Handled = true; break;
             case Key.Z when ctrl && !inText: _ = UndoAsync(); e.Handled = true; break;
             case Key.System when e.SystemKey == Key.P:
                 ShowProps(PropsPanel.Visibility != Visibility.Visible);
@@ -502,9 +503,12 @@ public partial class MainWindow : Window
             ((MenuItem)menu.Items[0]).Click += (_, _) => _active.Open(first);
             if (!first.IsDirectory && sel.Count == 1)
                 menu.Items.Add(MenuEntry("Ctx_OpenWith", null, true, () => ShellVerb(first.FullPath, "openas")));
+            if (sel.Count == 1 && ShellLink.IsShortcut(first.FullPath))
+                menu.Items.Add(MenuEntry("Ctx_GoToTarget", null, true, () => GoToShortcutTarget(first.FullPath)));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Btn_Cut", "Ctrl+X", n > 0, () => PutOnClipboard(cut: true)));
             menu.Items.Add(MenuEntry("Btn_Copy", "Ctrl+C", n > 0, () => PutOnClipboard(cut: false)));
+            menu.Items.Add(MenuEntry("Ctx_CopyAsPath", "Ctrl+Shift+C", n > 0, CopyAsPath));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Btn_CopyToOther", "F5", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(false)));
             menu.Items.Add(MenuEntry("Btn_MoveToOther", "F6", n > 0 && otherInFolder, () => _ = TransferToOtherAsync(true)));
@@ -540,9 +544,11 @@ public partial class MainWindow : Window
             menu.Items.Add(MenuEntry("Btn_Refresh", null, true, () => _active.Reload()));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Btn_Paste", "Ctrl+V", _clipboard is not null && inFolder, () => _ = PasteAsync()));
+            menu.Items.Add(MenuEntry("Ctx_PasteShortcut", null, _clipboard is not null && inFolder, PasteShortcut));
             var newMenu = new MenuItem { Header = Loc.Get("Ctx_New"), IsEnabled = inFolder };
             newMenu.Items.Add(MenuEntry("Ctx_NewFolder", "F7", true, NewFolder));
             newMenu.Items.Add(MenuEntry("Ctx_NewTextFile", null, true, NewTextFile));
+            newMenu.Items.Add(MenuEntry("Ctx_NewShortcut", null, true, NewShortcut));
             menu.Items.Add(newMenu);
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuEntry("Ctx_Properties", null, inFolder,
@@ -791,6 +797,82 @@ public partial class MainWindow : Window
             return;
         }
         await RunAsync(() => _undo.UndoLast(), "Msg_Undone");
+    }
+
+    // ---- Shortcuts / paths ----
+
+    /// <summary>Selected paths as text, quoted, one per line (like Explorer's "Copy as path").</summary>
+    private void CopyAsPath()
+    {
+        var paths = ActiveView.SelectedItems.Where(i => !i.IsDrive || i.FullPath.Length > 0)
+            .Select(i => $"\"{i.FullPath.TrimEnd('\\')}\"").ToList();
+        if (paths.Count == 0) return;
+        try
+        {
+            Clipboard.SetText(string.Join(Environment.NewLine, paths));
+            Status(Loc.Get("Msg_PathCopied"));
+        }
+        catch (Exception ex)
+        {
+            Status(Loc.Get("Msg_Error", ex.Message));
+        }
+    }
+
+    /// <summary>Opens the shortcut target's folder in the active pane, with the target selected.</summary>
+    private void GoToShortcutTarget(string lnk)
+    {
+        try
+        {
+            string? target = ShellLink.Target(lnk);
+            if (target is null || !(File.Exists(target) || Directory.Exists(target)))
+            {
+                Status(Loc.Get("Msg_TargetMissing"));
+                return;
+            }
+            string? dir = Path.GetDirectoryName(target.TrimEnd('\\'));
+            if (dir is null) { _active.Navigate(target); return; } // a drive
+            var view = ActiveView;
+            if (_active.Navigate(dir))
+                Dispatcher.BeginInvoke(() => { view.SelectPaths(new[] { target }); view.FocusList(); },
+                    System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+        catch (Exception ex)
+        {
+            Status(Loc.Get("Msg_Error", ex.Message));
+        }
+    }
+
+    /// <summary>"Paste shortcut": a .lnk in the current folder for each copied/cut item.</summary>
+    private void PasteShortcut()
+    {
+        if (_clipboard is not { } clip || _active.CurrentPath.Length == 0) return;
+        var view = ActiveView;
+        try
+        {
+            var made = clip.Paths.Select(p => ShellLink.Create(_active.CurrentPath, p)).ToList();
+            _undo.Push(made.Select(m => (UndoStep)new UndoStep.Created(m)).ToList());
+            _a.Reload();
+            _b.Reload();
+            view.SelectPaths(made);
+            Status(Loc.Get("Msg_Created"));
+        }
+        catch (Exception ex)
+        {
+            Status(Loc.Get("Msg_Error", ex.Message));
+        }
+    }
+
+    private void NewShortcut()
+    {
+        if (_active.CurrentPath.Length == 0) return;
+        try
+        {
+            ShellLink.NewWithWizard(_active.CurrentPath, Loc.Get("NewShortcutDefault"));
+        }
+        catch (Exception ex)
+        {
+            Status(Loc.Get("Msg_Error", ex.Message));
+        }
     }
 
     private void NewFolder() => CreateNew(folder: true);
