@@ -517,7 +517,10 @@ public partial class MainWindow : Window
                 menu.Items.Add(MenuEntry("Ctx_IProps", "Alt+P", true, () => ShowProps(true)));
                 string ext = Path.GetExtension(first.FullPath);
                 if (ext.Equals(".iam", StringComparison.OrdinalIgnoreCase) || ext.Equals(".ipt", StringComparison.OrdinalIgnoreCase))
+                {
                     menu.Items.Add(MenuEntry("Ctx_CopyDesign", null, true, () => CopyDesign(first.FullPath)));
+                    menu.Items.Add(MenuEntry("Ctx_RenameWithDrawing", null, true, () => _ = RenameAsync(true)));
+                }
                 menu.Items.Add(new Separator());
             }
             if (sel.Count == 1 && first.IsDirectory)
@@ -707,7 +710,9 @@ public partial class MainWindow : Window
         }, "Msg_Deleted");
     }
 
-    private async void Rename()
+    private async void Rename() => await RenameAsync(false);
+
+    private async Task RenameAsync(bool withDrawings)
     {
         var pane = _active;
         var view = ActiveView;
@@ -722,7 +727,7 @@ public partial class MainWindow : Window
 
         try
         {
-            if (await RenameModelAsync(item.FullPath, name) is string renamed)
+            if (withDrawings && await RenameModelAsync(item.FullPath, name) is string renamed)
             {
                 _a.Reload();
                 _b.Reload();
