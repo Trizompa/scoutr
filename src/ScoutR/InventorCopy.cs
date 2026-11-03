@@ -145,7 +145,46 @@ public static partial class InventorProps
             if ((attr & FileAttributes.ReadOnly) != 0) File.SetAttributes(to, attr & ~FileAttributes.ReadOnly);
         }
 
-        // 2. Re-link each copy, on a fresh Apprentice (a copy keeps the original's internal id, which is
+        // 2. Part Numbers first, on a fresh Apprentice, while the copies are untouched: once a drawing has
+        //    been re-linked and saved, Apprentice refuses property edits on the part it shows (E_FAIL).
+        //    Parts first, then assemblies, then drawings.
+        step = "Part Number";
+        var warnings = new List<string>();
+        var refused = new List<(string Path, string Why)>();
+        WithFreshApprentice(() =>
+        {
+            foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p))
+                         .OrderBy(LinkOrder))
+            {
+                file = Path.GetFileName(to);
+                progress.Report(file);
+                try
+                {
+                    RenamePartNumber(to, find, replace);
+                }
+                catch (Exception ex)
+                {
+                    refused.Add((to, ex.Message));
+                }
+            }
+            return true;
+        });
+
+        // Some files refuse the edit through Apprentice (E_FAIL): once Apprentice has let go of them,
+        // write the property straight into the file. Only if that fails too is it reported; the copy stays.
+        foreach (var (to, why) in refused)
+        {
+            file = Path.GetFileName(to);
+            try
+            {
+                RenamePartNumberInFile(to, find, replace);
+            }
+            catch (Exception ex)
+            {
+                warnings.Add($"{file}: {why} / {ex.Message}");
+            }
+        }
+        // 3. Re-link each copy, on a fresh Apprentice (a copy keeps the original's internal id, which is
         //    what lets ReplaceReference accept it).
         step = "re-link";
         WithFreshApprentice(() =>
@@ -184,45 +223,7 @@ public static partial class InventorProps
             return true;
         });
 
-        // 3. Part Numbers, on another fresh Apprentice: now every copy uses only copies, so nothing loads
-        //    an original (which shares its internal id with the copy and makes Apprentice refuse edits).
-        //    Parts first, then assemblies, then drawings: each is opened as a top document when possible.
-        step = "Part Number";
-        var warnings = new List<string>();
-        var refused = new List<(string Path, string Why)>();
-        WithFreshApprentice(() =>
-        {
-            foreach (string to in map.Values.Where(p => IsLinkable(p) && renamePartNumber.Contains(p))
-                         .OrderBy(LinkOrder))
-            {
-                file = Path.GetFileName(to);
-                progress.Report(file);
-                try
-                {
-                    RenamePartNumber(to, find, replace);
-                }
-                catch (Exception ex)
-                {
-                    refused.Add((to, ex.Message));
-                }
-            }
-            return true;
-        });
 
-        // Some files refuse the edit through Apprentice (E_FAIL): once Apprentice has let go of them,
-        // write the property straight into the file. Only if that fails too is it reported; the copy stays.
-        foreach (var (to, why) in refused)
-        {
-            file = Path.GetFileName(to);
-            try
-            {
-                RenamePartNumberInFile(to, find, replace);
-            }
-            catch (Exception ex)
-            {
-                warnings.Add($"{file}: {why} / {ex.Message}");
-            }
-        }
         return warnings;
         }
         catch (Exception ex)
