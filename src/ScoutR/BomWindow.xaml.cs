@@ -44,7 +44,7 @@ public partial class BomWindow : Window
     public static string Text(BomRow row, string key) => key switch
     {
         "#Item" => row.Item,
-        "#Qty" => row.Qty.ToString(),
+        "#Qty" => row.Qty == 0 ? "" : row.Qty.ToString(), // flat view: no parent, only the total
         "#TotalQty" => row.TotalQty.ToString(),
         "#Structure" => row.Structure,
         "#Path" => row.Path,
@@ -105,7 +105,7 @@ public partial class BomWindow : Window
                 sum[key] = r with { Level = 0 };
             }
         }
-        return order.Select((k, i) => sum[k] with { Item = (i + 1).ToString(), Qty = sum[k].TotalQty }).ToList();
+        return order.Select((k, i) => sum[k] with { Item = (i + 1).ToString(), Qty = 0 }).ToList();
     }
 
     // ---- Sorting: click a column header (again = reverse). Sub-items stay under their assembly. ----
@@ -283,7 +283,7 @@ public partial class BomWindow : Window
         var rows = Sorted(Current()).Select(r => (IReadOnlyList<XlsxWriter.Cell>)keys.Select(k => k switch
         {
             "#Item" => new XlsxWriter.Cell(r.Item, r.Level),
-            "#Qty" => new XlsxWriter.Cell(r.Qty),
+            "#Qty" => new XlsxWriter.Cell(r.Qty == 0 ? null : r.Qty),
             "#TotalQty" => new XlsxWriter.Cell(r.TotalQty),
             _ => new XlsxWriter.Cell(Text(r, k)),
         }).ToList()).ToList();
