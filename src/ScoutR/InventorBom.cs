@@ -115,8 +115,11 @@ public static partial class InventorProps
                     if (Path.GetExtension(key).Equals(".ipt", StringComparison.OrdinalIgnoreCase))
                     {
                         var marks = Markers(cdoc);
+                        // G_L alone also matches Content Center shapes: a frame member is in addition tied to the skeleton part.
+                        bool linked = LinksPart(cdoc);
+                        if (linked) marks.Add("linked to part");
                         props["#Markers"] = string.Join("; ", marks);
-                        if (marks.Any(IsFrameMarker)) props["#Frame"] = "Yes";
+                        if (linked && marks.Contains("G_L")) props["#Frame"] = "Yes";
                     }
                     try
                     {
@@ -173,12 +176,17 @@ public static partial class InventorProps
         return names;
     }
 
-    private static bool IsFrameMarker(string n) =>
-        n == "G_L" ||
-        n.Contains("com.autodesk.FG", StringComparison.OrdinalIgnoreCase) ||
-        n.Contains("FrameMember", StringComparison.OrdinalIgnoreCase) ||
-        n.Contains("Frame Generator", StringComparison.OrdinalIgnoreCase) ||
-        n.StartsWith("FG", StringComparison.OrdinalIgnoreCase);
+    private static bool LinksPart(object doc)
+    {
+        try
+        {
+            foreach (object d in Items(Get(Get(doc, "File")!, "ReferencedFileDescriptors")!))
+                if (Get(d, "FullFileName") is string f && f.EndsWith(".ipt", StringComparison.OrdinalIgnoreCase))
+                    return true;
+        }
+        catch { }
+        return false;
+    }
 
     private static string StructureName(int s) => s switch
     {
