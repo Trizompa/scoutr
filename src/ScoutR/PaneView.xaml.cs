@@ -42,6 +42,52 @@ public partial class PaneView : UserControl
             ItemList.Focus();
     }
 
+    /// <summary>
+    /// Renames in place: a text box over the item's name. Returns the new name, or null when cancelled
+    /// (or when the row can't be shown).
+    /// </summary>
+    public async Task<string?> EditNameAsync(FsItem item, bool stemOnly)
+    {
+        ItemList.ScrollIntoView(item);
+        ItemList.UpdateLayout();
+        if (ItemList.ItemContainerGenerator.ContainerFromItem(item) is not ListViewItem row ||
+            FindNameText(row, item.Name) is not TextBlock text)
+            return null;
+        // As wide as the Name column allows (from the text to the column's right edge).
+        double width = 200;
+        if (ItemList.View is GridView g && g.Columns.FirstOrDefault(c => _columnKeys.TryGetValue(c, out var k) &&
+                k == PaneViewModel.SortKey.Name) is { } col)
+        {
+            double left = text.TranslatePoint(new Point(0, 0), row).X;
+            double colLeft = 0;
+            foreach (var c in g.Columns) { if (c == col) break; colLeft += c.ActualWidth; }
+            width = Math.Max(80, colLeft + col.ActualWidth - left - 4);
+        }
+        _editing = true;
+        try
+        {
+            return await InlineRename.Edit(text, item.Name, stemOnly, width);
+        }
+        finally
+        {
+            _editing = false;
+            row.Focus();
+        }
+    }
+
+    private bool _editing;
+
+    private static TextBlock? FindNameText(DependencyObject parent, string name)
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            if (child is TextBlock tb && tb.Text == name) return tb;
+            if (FindNameText(child, name) is { } found) return found;
+        }
+        return null;
+    }
+
     /// <summary>Selects the items whose full path is in <paramref name="paths"/>.</summary>
     public void SelectPaths(IEnumerable<string> paths, bool scroll = true)
     {
@@ -109,6 +155,7 @@ public partial class PaneView : UserControl
     {
         _dragStart = null;
         _pressedOnSelected = null;
+        if (_editing) return; // clicks in the rename box
         if (Keyboard.Modifiers == ModifierKeys.None && IsOnEmptySpace(e))
         {
             ItemList.SelectedItems.Clear();

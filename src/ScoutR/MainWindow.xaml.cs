@@ -728,8 +728,7 @@ public partial class MainWindow : Window
         if (items.Count != 1 || items[0].IsDrive) return;
 
         var item = items[0];
-        string? name = InputDialog.Ask(this, Loc.Get("Prompt_RenameTitle"), Loc.Get("Prompt_RenameLabel"),
-            item.Name, selectStemOnly: !item.IsDirectory);
+        string? name = await view.EditNameAsync(item, stemOnly: !item.IsDirectory);
         RestoreActive(pane, view);
         if (name is null || name == item.Name) return;
 
