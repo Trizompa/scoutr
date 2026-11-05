@@ -47,6 +47,15 @@ public sealed class FsItem
     public bool HasCustomIcon { get; init; }
     public long? Size { get; init; }
     public DateTime? Modified { get; init; }
+    public DateTime? Created { get; init; }
+    public FileAttributes? Attributes { get; init; }
+    public string CreatedText => Created?.ToString("g", CultureInfo.CurrentCulture) ?? "";
+    public string ExtensionText => IsDirectory || IsDrive ? "" : Path.GetExtension(Name).TrimStart('.').ToLowerInvariant();
+    /// <summary>Explorer's letters: R read-only, H hidden, S system, A archive.</summary>
+    public string AttributesText => Attributes is FileAttributes a
+        ? (a.HasFlag(FileAttributes.ReadOnly) ? "R" : "") + (a.HasFlag(FileAttributes.Hidden) ? "H" : "") +
+          (a.HasFlag(FileAttributes.System) ? "S" : "") + (a.HasFlag(FileAttributes.Archive) ? "A" : "")
+        : "";
 
     public string SizeText => Size is long s ? FormatSize(s) : "";
 
@@ -89,8 +98,10 @@ public sealed class FsItem
             try { size = f.Length; } catch { /* locked or vanished */ }
         }
 
-        DateTime? modified = null;
-        try { modified = fi.LastWriteTime; } catch { }
+        DateTime? modified = null, created = null;
+        try { modified = fi.LastWriteTime; created = fi.CreationTime; } catch { }
+        FileAttributes? attributes = null;
+        try { attributes = fi.Attributes; } catch { }
 
         return new FsItem
         {
@@ -99,6 +110,8 @@ public sealed class FsItem
             IsDirectory = isDir,
             Size = size,
             Modified = modified,
+            Created = created,
+            Attributes = attributes,
             HasCustomIcon = isDir && ShellInfo.HasCustomIcon(fi),
         };
     }

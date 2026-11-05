@@ -11,7 +11,13 @@ public partial class PaneView : UserControl
         InitializeComponent();
         // Remember which column sorts what before the user can reorder them.
         if (ItemList.View is GridView g)
-            for (int i = 0; i < g.Columns.Count && i < 4; i++) _columnKeys[g.Columns[i]] = (PaneViewModel.SortKey)i;
+        {
+            _allColumns.AddRange(g.Columns);
+            for (int i = 0; i < g.Columns.Count; i++) _columnKeys[g.Columns[i]] = (PaneViewModel.SortKey)i;
+            foreach (var c in _allColumns.Skip(4)) g.Columns.Remove(c); // extra columns start hidden
+            g.ColumnHeaderContextMenu = new ContextMenu();
+            g.ColumnHeaderContextMenu.Opened += (_, _) => FillColumnMenu(g);
+        }
         PreviewMouseDown += (_, _) => Activated?.Invoke(this, EventArgs.Empty);
         DataContextChanged += (_, e) =>
         {
@@ -191,9 +197,6 @@ public partial class PaneView : UserControl
             if (!_headerText.ContainsKey(c)) _headerText[c] = c.Header?.ToString() ?? "";
 
         // Columns can be dragged into another order, so each one keeps the sort key it was created with.
-        if (_columnKeys.Count == 0)
-            for (int i = 0; i < grid.Columns.Count && i < 4; i++)
-                _columnKeys[grid.Columns[i]] = (PaneViewModel.SortKey)i; // Name, Date modified, Type, Size
         if (!_columnKeys.TryGetValue(column, out var key)) return;
         Vm.SetSort(key);
 
@@ -211,6 +214,38 @@ public partial class PaneView : UserControl
             c.Header = sorted ? _headerText[c] + (Vm.SortDescending ? "  \u2193" : "  \u2191") : _headerText[c];
         }
     }
+
+    private readonly List<GridViewColumn> _allColumns = new();
+
+    private string HeaderText(GridViewColumn c) =>
+        _headerText.TryGetValue(c, out var t) ? t : (_headerText[c] = c.Header?.ToString() ?? "");
+
+    /// <summary>Right-click on the headers: tick the columns to show (Name always stays).</summary>
+    private void FillColumnMenu(GridView grid)
+    {
+        var menu = grid.ColumnHeaderContextMenu;
+        menu.Items.Clear();
+        foreach (var c in _allColumns.Skip(1))
+        {
+            var col = c;
+            var mi = new MenuItem { Header = HeaderText(col), IsCheckable = true, IsChecked = grid.Columns.Contains(col) };
+            mi.Click += (_, _) =>
+            {
+                if (grid.Columns.Contains(col))
+                {
+                    grid.Columns.Remove(col);
+                    if (Vm is { } vm && _columnKeys[col] == vm.SortBy) { vm.ApplySort(PaneViewModel.SortKey.Name, false); }
+                }
+                else grid.Columns.Add(col);
+                UpdateSortArrow();
+                ColumnsChanged?.Invoke(this, EventArgs.Empty);
+            };
+            menu.Items.Add(mi);
+        }
+    }
+
+    /// <summary>Raised when a column is shown or hidden, so the layout can be saved.</summary>
+    public event EventHandler? ColumnsChanged;
 
     /// <summary>Current column order, widths and sort, for saving.</summary>
     public void SaveLayout(PaneSettings into)
@@ -230,6 +265,17 @@ public partial class PaneView : UserControl
     {
         if (ItemList.View is GridView grid)
         {
+            if (from.Columns.Count > 0)
+            {
+                // Saved layouts list the visible columns only.
+                var visible = from.Columns.Select(s => s.Key).Append(0).ToHashSet();
+                foreach (var c in _allColumns)
+                {
+                    bool show = visible.Contains((int)_columnKeys[c]);
+                    if (show && !grid.Columns.Contains(c)) grid.Columns.Add(c);
+                    else if (!show) grid.Columns.Remove(c);
+                }
+            }
             int pos = 0;
             foreach (var saved in from.Columns)
             {
@@ -244,7 +290,7 @@ public partial class PaneView : UserControl
                 if (saved.Width > 10) column.Width = saved.Width;
             }
         }
-        Vm?.ApplySort((PaneViewModel.SortKey)Math.Clamp(from.SortBy, 0, 3), from.SortDescending);
+        Vm?.ApplySort((PaneViewModel.SortKey)Math.Clamp(from.SortBy, 0, _allColumns.Count - 1), from.SortDescending);
         if (from.SortBy != 0 || from.SortDescending) UpdateSortArrow();
     }
 

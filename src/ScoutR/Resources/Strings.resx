@@ -33,6 +33,9 @@
   <data name="Col_Name" xml:space="preserve"><value>Name</value></data>
   <data name="Col_Modified" xml:space="preserve"><value>Date modified</value></data>
   <data name="Col_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Col_Created" xml:space="preserve"><value>Date created</value></data>
+  <data name="Col_Extension" xml:space="preserve"><value>Extension</value></data>
+  <data name="Col_Attributes" xml:space="preserve"><value>Attributes</value></data>
 
   <data name="Tip_Back" xml:space="preserve"><value>Back</value></data>
   <data name="Tip_Up" xml:space="preserve"><value>Up one level</value></data>

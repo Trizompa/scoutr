@@ -74,7 +74,13 @@ public partial class MainWindow : Window
             view.DragFinished += (_, _) => { _a.Reload(); _b.Reload(); };
             var menu = new ContextMenu();
             view.ItemList.ContextMenu = menu;
-            view.ItemList.ContextMenuOpening += (_, _) => BuildMenu(menu);
+            view.ItemList.ContextMenuOpening += (_, e) =>
+            {
+                // The column headers have their own menu (choose columns).
+                for (var d = e.OriginalSource as DependencyObject; d is not null; d = System.Windows.Media.VisualTreeHelper.GetParent(d))
+                    if (d is System.Windows.Controls.GridViewColumnHeader) return;
+                BuildMenu(menu);
+            };
         }
 
         // Clicking a folder in the tree navigates the active pane.

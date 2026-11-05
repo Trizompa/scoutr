@@ -267,7 +267,7 @@ public sealed class PaneViewModel : ObservableObject
 
     // ---- Sorting (column header click) ----
 
-    public enum SortKey { Name, Modified, Type, Size }
+    public enum SortKey { Name, Modified, Type, Size, Created, Extension, Attributes }
 
     public SortKey SortBy { get; private set; } = SortKey.Name;
     public bool SortDescending { get; private set; }
@@ -287,7 +287,7 @@ public sealed class PaneViewModel : ObservableObject
         else
         {
             SortBy = key;
-            SortDescending = key is SortKey.Modified or SortKey.Size; // newest / biggest first, like Explorer
+            SortDescending = key is SortKey.Modified or SortKey.Size or SortKey.Created; // newest / biggest first, like Explorer
         }
         Items = Sort(Items);
     }
@@ -304,6 +304,12 @@ public sealed class PaneViewModel : ObservableObject
             (SortKey.Modified, true) => src.OrderByDescending(i => i.Modified ?? DateTime.MinValue),
             (SortKey.Size, false) => src.OrderBy(i => i.Size ?? -1),
             (SortKey.Size, true) => src.OrderByDescending(i => i.Size ?? -1),
+            (SortKey.Created, false) => src.OrderBy(i => i.Created ?? DateTime.MinValue),
+            (SortKey.Created, true) => src.OrderByDescending(i => i.Created ?? DateTime.MinValue),
+            (SortKey.Extension, false) => src.OrderBy(i => i.ExtensionText, cmp),
+            (SortKey.Extension, true) => src.OrderByDescending(i => i.ExtensionText, cmp),
+            (SortKey.Attributes, false) => src.OrderBy(i => i.AttributesText, cmp),
+            (SortKey.Attributes, true) => src.OrderByDescending(i => i.AttributesText, cmp),
             (SortKey.Type, false) => src.OrderBy(i => i.TypeText, cmp),
             (SortKey.Type, true) => src.OrderByDescending(i => i.TypeText, cmp),
             (_, false) => src.OrderBy(i => i.Name, cmp),

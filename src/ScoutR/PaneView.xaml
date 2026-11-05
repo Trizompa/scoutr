@@ -130,6 +130,9 @@
                                     DisplayMemberBinding="{Binding ModifiedText}"/>
                     <GridViewColumn Header="{l:T Col_Type}" Width="140" DisplayMemberBinding="{Binding TypeText}"/>
                     <GridViewColumn Header="{l:T Col_Size}" Width="80" DisplayMemberBinding="{Binding SizeText}"/>
+                    <GridViewColumn Header="{l:T Col_Created}" Width="130" DisplayMemberBinding="{Binding CreatedText}"/>
+                    <GridViewColumn Header="{l:T Col_Extension}" Width="70" DisplayMemberBinding="{Binding ExtensionText}"/>
+                    <GridViewColumn Header="{l:T Col_Attributes}" Width="70" DisplayMemberBinding="{Binding AttributesText}"/>
                 </GridView>
             </ListView.View>
         </ListView>
