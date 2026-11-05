@@ -295,7 +295,7 @@ public sealed class PaneViewModel : ObservableObject
     /// <summary>Folders always come first (like Explorer); within each group the chosen column decides.</summary>
     private List<FsItem> Sort(List<FsItem> items)
     {
-        var cmp = StringComparer.CurrentCultureIgnoreCase;
+        var cmp = NaturalComparer.Instance;
         IEnumerable<FsItem> folders = items.Where(i => i.IsDirectory), files = items.Where(i => !i.IsDirectory);
 
         IOrderedEnumerable<FsItem> Order(IEnumerable<FsItem> src) => (SortBy, SortDescending) switch
