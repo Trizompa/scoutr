@@ -57,6 +57,7 @@ public partial class MainWindow : Window
         ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); UpdatePreview(); };
         ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); UpdatePreview(); };
         PropsPanel.CloseRequested += (_, _) => ShowProps(false);
+        PropsPanel.SizeChanged += (_, _) => FitPreviewHeight();
         SizeChanged += (_, _) => PropsPanel.MaxHeight = Math.Max(150, ActualHeight * 0.6);
         PropsPanel.Hidden = new HashSet<string>(_settings.HiddenIProps, StringComparer.OrdinalIgnoreCase);
         PropsPanel.HiddenChanged += (_, _) =>
@@ -98,7 +99,7 @@ public partial class MainWindow : Window
         ViewB.SaveLayout(_settings.B);
         _settings.TreeWidth = TreeColumn.ActualWidth;
         _settings.ShowPreview = Preview.Visibility == Visibility.Visible;
-        if (_settings.ShowPreview) _settings.PreviewWidth = PreviewColumn.ActualWidth;
+        if (_settings.ShowPreview && !PreviewColumn.Width.IsStar) _settings.PreviewWidth = PreviewColumn.ActualWidth;
         _settings.Save();
     }
 
@@ -370,14 +371,35 @@ public partial class MainWindow : Window
 
     private void ShowPreview(bool show)
     {
-        if (!show && Preview.Visibility == Visibility.Visible) _settings.PreviewWidth = PreviewColumn.ActualWidth;
-        Preview.Visibility = PreviewSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        PreviewSplitColumn.Width = show ? GridLength.Auto : new GridLength(0);
+        if (!show && Preview.Visibility == Visibility.Visible && !PreviewColumn.Width.IsStar)
+            _settings.PreviewWidth = PreviewColumn.ActualWidth;
+        Preview.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         PreviewColumn.Width = show ? new GridLength(_settings.PreviewWidth > 100 ? _settings.PreviewWidth : 320) : new GridLength(0);
         PreviewColumn.MinWidth = show ? 150 : 0;
         BtnPreview.IsChecked = show;
+        UpdateBottom();
         if (show) UpdatePreview();
     }
+
+    /// <summary>The strip under the panes holds the preview and/or the iProperties.</summary>
+    private void UpdateBottom()
+    {
+        bool preview = Preview.Visibility == Visibility.Visible, props = PropsPanel.Visibility == Visibility.Visible;
+        PropsSplitter.Visibility = preview || props ? Visibility.Visible : Visibility.Collapsed;
+        // Height fits the visible fields (up to 60% of the window, then it scrolls); the preview alone keeps its own.
+        PropsRow.Height = preview || props ? GridLength.Auto : new GridLength(0);
+        PreviewSplitter.Visibility = preview && props ? Visibility.Visible : Visibility.Collapsed;
+        PreviewSplitColumn.Width = preview && props ? GridLength.Auto : new GridLength(0);
+        // Alone the preview takes the whole width; next to the iProperties it keeps its column.
+        if (preview && !props) PreviewColumn.Width = new GridLength(1, GridUnitType.Star);
+        else if (preview && PreviewColumn.Width.IsStar)
+            PreviewColumn.Width = new GridLength(_settings.PreviewWidth > 100 ? _settings.PreviewWidth : 320);
+        FitPreviewHeight();
+    }
+
+    /// <summary>As tall as the iProperties next to it, never less than a usable size.</summary>
+    private void FitPreviewHeight() =>
+        Preview.Height = PropsPanel.Visibility == Visibility.Visible ? Math.Max(280, PropsPanel.ActualHeight) : 280;
 
     private void UpdatePreview()
     {
@@ -391,9 +413,7 @@ public partial class MainWindow : Window
     private void ShowProps(bool show)
     {
         PropsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        PropsSplitter.Visibility = PropsPanel.Visibility;
-        // Height fits the visible fields (up to 60% of the window, then it scrolls).
-        PropsRow.Height = show ? GridLength.Auto : new GridLength(0);
+        UpdateBottom();
         PropsPanel.MaxHeight = Math.Max(150, ActualHeight * 0.6);
         BtnIProps.IsChecked = show; // ribbon button stays "on" while the panel is open
         if (show) UpdateProps();

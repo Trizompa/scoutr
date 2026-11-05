@@ -103,8 +103,6 @@
                 <ColumnDefinition Width="*" MinWidth="200"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*" MinWidth="200"/>
-                <ColumnDefinition x:Name="PreviewSplitColumn" Width="0"/>
-                <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="150"/>
@@ -231,15 +229,21 @@
             <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
             <l:PaneView x:Name="ViewB" Grid.Column="4"/>
 
-            <GridSplitter x:Name="PreviewSplitter" Grid.Column="5" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center"
-                          Background="{StaticResource LineBrush}" Visibility="Collapsed"/>
-            <l:PreviewPanel x:Name="Preview" Grid.Column="6" Grid.RowSpan="3" Visibility="Collapsed"/>
-
             <!-- iProperties panel (Inventor files), shown on request under the two panes -->
             <Border x:Name="PropsSplitter" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Height="1"
                     Background="{StaticResource LineBrush}" Visibility="Collapsed"/>
-            <l:IPropsPanel x:Name="PropsPanel" Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Visibility="Collapsed"
-                           VerticalAlignment="Top"/>
+            <!-- Under the panes: preview on the left, iProperties next to it (each one on request) -->
+            <Grid Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
+                    <ColumnDefinition x:Name="PreviewSplitColumn" Width="0"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <l:PreviewPanel x:Name="Preview" Visibility="Collapsed" Height="280" VerticalAlignment="Stretch"/>
+                <GridSplitter x:Name="PreviewSplitter" Grid.Column="1" Width="4" HorizontalAlignment="Center"
+                              Background="{StaticResource LineBrush}" Visibility="Collapsed"/>
+                <l:IPropsPanel x:Name="PropsPanel" Grid.Column="2" Visibility="Collapsed" VerticalAlignment="Top"/>
+            </Grid>
         </Grid>
 
         <!-- Status bar + update notice -->
