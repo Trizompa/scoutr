@@ -77,7 +77,7 @@ public partial class MainWindow : Window
             view.ItemList.ContextMenuOpening += (_, e) =>
             {
                 // The column headers have their own menu (choose columns).
-                for (var d = e.OriginalSource as DependencyObject; d is not null; d = System.Windows.Media.VisualTreeHelper.GetParent(d))
+                for (var d = e.OriginalSource as DependencyObject; d is not null; d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : null)
                     if (d is System.Windows.Controls.GridViewColumnHeader) return;
                 BuildMenu(menu);
             };
