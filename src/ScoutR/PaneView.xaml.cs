@@ -154,6 +154,36 @@ public partial class PaneView : UserControl
     private void ItemList_RightDown(object sender, MouseButtonEventArgs e)
     {
         if (IsOnEmptySpace(e)) ItemList.SelectedItems.Clear();
+        else if (IsOnRowBlank(e))
+        {
+            // Blank part of a row (no text, no icon): the menu is the folder's one (New, Paste...).
+            ItemList.SelectedItems.Clear();
+            ItemList.Focus();
+            e.Handled = true;
+        }
+    }
+
+    /// <summary>True when the click is on a row but not on its text or icon.</summary>
+    private bool IsOnRowBlank(MouseButtonEventArgs e)
+    {
+        for (var d = e.OriginalSource as DependencyObject; d is not null && d != ItemList;
+             d = d is System.Windows.Media.Visual ? System.Windows.Media.VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d))
+        {
+            switch (d)
+            {
+                case ListViewItem:
+                    return true;
+                case Image or ContentControl and not ListViewItem:
+                    return false;
+                case TextBlock tb:
+                    // A cell's TextBlock fills the column: only the part with letters counts as text.
+                    var x = e.GetPosition(tb).X;
+                    return tb.TextAlignment == TextAlignment.Right
+                        ? x < tb.ActualWidth - tb.DesiredSize.Width
+                        : x > tb.DesiredSize.Width;
+            }
+        }
+        return false;
     }
 
     /// <summary>Left click on empty space clears the selection, like Explorer.</summary>
