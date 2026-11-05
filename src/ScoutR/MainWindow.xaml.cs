@@ -21,6 +21,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         if (_settings.TreeWidth > 60) TreeColumn.Width = new GridLength(_settings.TreeWidth);
+        ShowPreview(_settings.ShowPreview);
         Closing += (_, _) => SaveSettings();
         // Settings are saved: end the process at once. Unloading Inventor Apprentice can hang, and a
         // ScoutR left running in the background would block the next update.
@@ -53,8 +54,8 @@ public partial class MainWindow : Window
             pane.Error += (_, msg) => Status(Loc.Get("Msg_Error", msg));
         }
 
-        ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
-        ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); };
+        ViewA.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); UpdatePreview(); };
+        ViewB.SelectedItemsChanged += (_, _) => { UpdateCommands(); UpdateProps(); UpdatePreview(); };
         PropsPanel.CloseRequested += (_, _) => ShowProps(false);
         SizeChanged += (_, _) => PropsPanel.MaxHeight = Math.Max(150, ActualHeight * 0.6);
         PropsPanel.Hidden = new HashSet<string>(_settings.HiddenIProps, StringComparer.OrdinalIgnoreCase);
@@ -96,6 +97,8 @@ public partial class MainWindow : Window
         ViewA.SaveLayout(_settings.A);
         ViewB.SaveLayout(_settings.B);
         _settings.TreeWidth = TreeColumn.ActualWidth;
+        _settings.ShowPreview = Preview.Visibility == Visibility.Visible;
+        if (_settings.ShowPreview) _settings.PreviewWidth = PreviewColumn.ActualWidth;
         _settings.Save();
     }
 
@@ -189,6 +192,7 @@ public partial class MainWindow : Window
         _b.IsActive = pane == _b;
         SyncTree();
         UpdateProps();
+        UpdatePreview();
     }
 
     /// <summary>After a dialog: the pane the command started in stays the active one and gets the focus back.</summary>
@@ -360,6 +364,28 @@ public partial class MainWindow : Window
     // ---- iProperties panel ----
 
 
+    // ---- Preview panel ----
+
+    private void Preview_Click(object sender, RoutedEventArgs e) => ShowPreview(Preview.Visibility != Visibility.Visible);
+
+    private void ShowPreview(bool show)
+    {
+        if (!show && Preview.Visibility == Visibility.Visible) _settings.PreviewWidth = PreviewColumn.ActualWidth;
+        Preview.Visibility = PreviewSplitter.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        PreviewSplitColumn.Width = show ? GridLength.Auto : new GridLength(0);
+        PreviewColumn.Width = show ? new GridLength(_settings.PreviewWidth > 100 ? _settings.PreviewWidth : 320) : new GridLength(0);
+        PreviewColumn.MinWidth = show ? 150 : 0;
+        BtnPreview.IsChecked = show;
+        if (show) UpdatePreview();
+    }
+
+    private void UpdatePreview()
+    {
+        if (Preview.Visibility != Visibility.Visible) return;
+        var sel = ActiveView.SelectedItems;
+        Preview.Show(sel.Count == 1 ? sel[0] : null);
+    }
+
     private void IProps_Click(object sender, RoutedEventArgs e) => ShowProps(PropsPanel.Visibility != Visibility.Visible);
 
     private void ShowProps(bool show)
@@ -453,6 +479,10 @@ public partial class MainWindow : Window
             case Key.V when ctrl && !inText: _ = PasteAsync(); e.Handled = true; break;
             case Key.C when Keyboard.Modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && !inText: CopyAsPath(); e.Handled = true; break;
             case Key.Z when ctrl && !inText: _ = UndoAsync(); e.Handled = true; break;
+            case Key.System when e.SystemKey == Key.P && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift):
+                ShowPreview(Preview.Visibility != Visibility.Visible);
+                e.Handled = true;
+                break;
             case Key.System when e.SystemKey == Key.P:
                 ShowProps(PropsPanel.Visibility != Visibility.Visible);
                 e.Handled = true;

@@ -95,6 +95,9 @@
   <data name="Ctx_PinWork" xml:space="preserve"><value>Pin to My Worklist</value></data>
   <data name="Ctx_UnpinWork" xml:space="preserve"><value>Unpin from My Worklist</value></data>
   <data name="Tip_IProps" xml:space="preserve"><value>Show the iProperties of the selected Inventor file (Alt+P)</value></data>
+  <data name="Btn_Preview" xml:space="preserve"><value>Preview</value></data>
+  <data name="Tip_Preview" xml:space="preserve"><value>Show a preview of the selected file (Alt+Shift+P)</value></data>
+  <data name="Preview_None" xml:space="preserve"><value>No preview</value></data>
   <data name="Ctx_IProps" xml:space="preserve"><value>iProperties</value></data>
   <data name="IProps_Close" xml:space="preserve"><value>Close</value></data>
   <data name="IProps_Save" xml:space="preserve"><value>Save</value></data>

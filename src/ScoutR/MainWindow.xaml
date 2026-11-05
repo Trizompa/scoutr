@@ -86,6 +86,8 @@
                                 <Button Style="{StaticResource ToolBtn}" Tag="&#xE72C;" Content="{l:T Btn_Refresh}" Click="Refresh_Click"/>
                                 <ToggleButton x:Name="BtnIProps" Style="{StaticResource ToolToggle}" Tag="&#xE946;"
                                               Content="iProperties" ToolTip="{l:T Tip_IProps}" Click="IProps_Click"/>
+                                <ToggleButton x:Name="BtnPreview" Style="{StaticResource ToolToggle}" Tag="&#xE8A1;"
+                                              Content="{l:T Btn_Preview}" ToolTip="{l:T Tip_Preview}" Click="Preview_Click"/>
                             </StackPanel>
                         </DockPanel>
                     </Border>
@@ -101,6 +103,8 @@
                 <ColumnDefinition Width="*" MinWidth="200"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*" MinWidth="200"/>
+                <ColumnDefinition x:Name="PreviewSplitColumn" Width="0"/>
+                <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" MinHeight="150"/>
@@ -226,6 +230,10 @@
             <l:PaneView x:Name="ViewA" Grid.Column="2"/>
             <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Center" Background="{StaticResource LineBrush}"/>
             <l:PaneView x:Name="ViewB" Grid.Column="4"/>
+
+            <GridSplitter x:Name="PreviewSplitter" Grid.Column="5" Grid.RowSpan="3" Width="4" HorizontalAlignment="Center"
+                          Background="{StaticResource LineBrush}" Visibility="Collapsed"/>
+            <l:PreviewPanel x:Name="Preview" Grid.Column="6" Grid.RowSpan="3" Visibility="Collapsed"/>
 
             <!-- iProperties panel (Inventor files), shown on request under the two panes -->
             <Border x:Name="PropsSplitter" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="3" Height="1"

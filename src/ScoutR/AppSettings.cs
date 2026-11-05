@@ -9,6 +9,8 @@ public sealed class AppSettings
     public PaneSettings A { get; set; } = new();
     public PaneSettings B { get; set; } = new();
     public double TreeWidth { get; set; }
+    public bool ShowPreview { get; set; }
+    public double PreviewWidth { get; set; }
     /// <summary>Standard iProperties the user chose not to show (Fields menu of the iProperties panel).</summary>
     public List<string> HiddenIProps { get; set; } = new();
     /// <summary>BOM window columns, in order ("#Item", "#Qty", "#File" or an iProperty name).</summary>
